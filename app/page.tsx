@@ -45,26 +45,26 @@ export default function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-green-50 to-white px-4 py-20 sm:py-28 text-center">
+      <section className="bg-gradient-to-br from-[#162550] to-[#0f1f3d] px-4 py-20 sm:py-28 text-center">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-[#e8eeff] leading-tight tracking-tight">
             Learn to invest{' '}
-            <span className="text-green-700">the halal way</span>
+            <span className="text-[#c9a84c]">the halal way</span>
           </h1>
-          <p className="mt-5 text-lg sm:text-xl text-gray-600 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-5 text-lg sm:text-xl text-[#8aabcc] max-w-xl mx-auto leading-relaxed">
             A free, beginner-friendly curriculum teaching Islamic finance principles — designed for
             young people aged 12 and up.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/auth/register"
-              className="inline-flex items-center justify-center rounded-full bg-green-600 px-8 py-3.5 text-base font-semibold text-white hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 transition-colors shadow-sm"
+              className="inline-flex items-center justify-center rounded-full bg-[#c9a84c] px-8 py-3.5 text-base font-semibold text-[#0f1f3d] hover:bg-[#b5923a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] transition-colors shadow-sm"
             >
               Start Learning
             </Link>
             <Link
               href="/start-a-club"
-              className="inline-flex items-center justify-center rounded-full border border-green-600 px-8 py-3.5 text-base font-semibold text-green-700 hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-[#c9a84c] px-8 py-3.5 text-base font-semibold text-[#c9a84c] hover:bg-[#2a2010] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] transition-colors"
             >
               Start a Club
             </Link>
@@ -73,11 +73,11 @@ export default function HomePage() {
       </section>
 
       {/* Feature cards */}
-      <section className="px-4 py-16 sm:py-20 bg-white" aria-labelledby="features-heading">
+      <section className="px-4 py-16 sm:py-20 bg-[#0f1f3d]" aria-labelledby="features-heading">
         <div className="max-w-5xl mx-auto">
           <h2
             id="features-heading"
-            className="text-center text-2xl sm:text-3xl font-bold text-gray-900 mb-12"
+            className="text-center text-2xl sm:text-3xl font-bold text-[#e8eeff] mb-12"
           >
             Everything you need to get started
           </h2>
@@ -85,13 +85,13 @@ export default function HomePage() {
             {FEATURES.map((feature) => (
               <li
                 key={feature.title}
-                className="rounded-2xl border border-gray-100 bg-gray-50 p-6 hover:shadow-md transition-shadow"
+                className="rounded-2xl border border-[#2d4f8a] bg-[#162550] p-6 hover:border-[#c9a84c] transition-colors"
               >
                 <div className="text-4xl mb-4" aria-hidden="true">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                <h3 className="text-lg font-bold text-[#e8eeff] mb-2">{feature.title}</h3>
+                <p className="text-sm text-[#8aabcc] leading-relaxed">{feature.description}</p>
               </li>
             ))}
           </ul>
@@ -100,13 +100,13 @@ export default function HomePage() {
 
       {/* How it works */}
       <section
-        className="px-4 py-16 sm:py-20 bg-green-50"
+        className="px-4 py-16 sm:py-20 bg-[#162550]"
         aria-labelledby="how-it-works-heading"
       >
         <div className="max-w-3xl mx-auto">
           <h2
             id="how-it-works-heading"
-            className="text-center text-2xl sm:text-3xl font-bold text-gray-900 mb-12"
+            className="text-center text-2xl sm:text-3xl font-bold text-[#e8eeff] mb-12"
           >
             How it works
           </h2>
@@ -114,16 +114,16 @@ export default function HomePage() {
             {HOW_IT_WORKS.map((item) => (
               <li key={item.step} className="flex gap-5 items-start">
                 <div
-                  className="flex-shrink-0 w-10 h-10 rounded-full bg-green-600 text-white font-bold text-base flex items-center justify-center shadow-sm"
+                  className="flex-shrink-0 w-10 h-10 rounded-full bg-[#c9a84c] text-[#0f1f3d] font-bold text-base flex items-center justify-center shadow-sm"
                   aria-hidden="true"
                 >
                   {item.step}
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1">
+                  <h3 className="text-base sm:text-lg font-bold text-[#e8eeff] mb-1">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
+                  <p className="text-sm text-[#8aabcc] leading-relaxed">{item.description}</p>
                 </div>
               </li>
             ))}
@@ -131,7 +131,7 @@ export default function HomePage() {
           <div className="mt-12 text-center">
             <Link
               href="/auth/register"
-              className="inline-flex items-center justify-center rounded-full bg-green-600 px-8 py-3.5 text-base font-semibold text-white hover:bg-green-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 transition-colors shadow-sm"
+              className="inline-flex items-center justify-center rounded-full bg-[#c9a84c] px-8 py-3.5 text-base font-semibold text-[#0f1f3d] hover:bg-[#b5923a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] transition-colors shadow-sm"
             >
               Get started — it&apos;s free
             </Link>

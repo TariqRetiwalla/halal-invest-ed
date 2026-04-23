@@ -40,7 +40,7 @@ const QUIZ_DATA: Record<number, QuizQuestion[]> = {
     },
     {
       id: 'l1q2',
-      question: 'If you invest £1,000 and earn £100 profit, what is your profit rate?',
+      question: 'If you invest $1,000 and earn $100 profit, what is your profit rate?',
       options: [
         { id: 'a', text: '1%' },
         { id: 'b', text: '5%' },
@@ -49,9 +49,9 @@ const QUIZ_DATA: Record<number, QuizQuestion[]> = {
       ],
       correctOptionId: 'c',
       explanations: {
-        a: '1% of £1,000 would only be £10 in profit — that\'s much less than £100.',
-        b: '5% would give you £50 profit, not £100.',
-        d: '100% would mean you doubled your money — your profit would equal your full investment of £1,000.',
+        a: '1% of $1,000 would only be $10 in profit — that\'s much less than $100.',
+        b: '5% would give you $50 profit, not $100.',
+        d: '100% would mean you doubled your money — your profit would equal your full investment of $1,000.',
       },
     },
     {
@@ -138,18 +138,18 @@ const QUIZ_DATA: Record<number, QuizQuestion[]> = {
     },
     {
       id: 'l2q4',
-      question: 'You invest £500, earn 10% profit in year 1, and reinvest everything. How much do you start year 2 with?',
+      question: 'You invest $500, earn 10% profit in year 1, and reinvest everything. How much do you start year 2 with?',
       options: [
-        { id: 'a', text: '£500' },
-        { id: 'b', text: '£510' },
-        { id: 'c', text: '£550' },
-        { id: 'd', text: '£600' },
+        { id: 'a', text: '$500' },
+        { id: 'b', text: '$510' },
+        { id: 'c', text: '$550' },
+        { id: 'd', text: '$600' },
       ],
       correctOptionId: 'c',
       explanations: {
-        a: '£500 forgets to add the 10% profit — you earned £50 in year 1, so you start year 2 with more.',
-        b: '£510 is the result of 2% profit on £500, not 10%.',
-        d: '£600 would mean you earned 20% profit — 10% of £500 is £50, giving you £550.',
+        a: '$500 forgets to add the 10% profit — you earned $50 in year 1, so you start year 2 with more.',
+        b: '$510 is the result of 2% profit on $500, not 10%.',
+        d: '$600 would mean you earned 20% profit — 10% of $500 is $50, giving you $550.',
       },
     },
   ],
@@ -254,7 +254,7 @@ const QUIZ_DATA: Record<number, QuizQuestion[]> = {
     },
     {
       id: 'l4q3',
-      question: 'A company has total assets of £10 million and total debt of £8 million. Is this a concern for halal investing?',
+      question: 'A company has total assets of $10 million and total debt of $8 million. Is this a concern for halal investing?',
       options: [
         { id: 'a', text: 'No — the debt ratio tells us nothing about the sector' },
         { id: 'b', text: 'Yes — the debt is too high relative to assets' },

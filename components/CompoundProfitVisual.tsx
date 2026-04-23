@@ -4,9 +4,10 @@ import { useState } from 'react';
 
 const INITIAL = 1000;
 const RATE = 0.07;
+const maxValue = INITIAL * Math.pow(1 + RATE, 30);
 
-function formatPounds(value: number): string {
-  return '£' + Math.round(value).toLocaleString('en-GB');
+function formatDollars(value: number): string {
+  return '$' + Math.round(value).toLocaleString('en-US');
 }
 
 export default function CompoundProfitVisual() {
@@ -15,21 +16,20 @@ export default function CompoundProfitVisual() {
   const compound = INITIAL * Math.pow(1 + RATE, years);
   const simple = INITIAL + INITIAL * RATE * years;
 
-  const maxValue = INITIAL * Math.pow(1 + RATE, 30);
   const compoundPct = (compound / maxValue) * 100;
   const simplePct = (simple / maxValue) * 100;
 
   return (
-    <div className="my-8 rounded-2xl border border-gray-100 bg-gray-50 p-6">
-      <p className="text-sm font-semibold text-gray-800 mb-5">
-        If you invest £1,000 at 7% profit per year…
+    <div className="my-8 rounded-2xl border border-[#2d4f8a] bg-[#162550] p-6">
+      <p className="text-sm font-semibold text-[#e8eeff] mb-5">
+        If you invest $1,000 at 7% profit per year…
       </p>
 
       {/* Slider */}
       <div className="mb-6">
-        <label htmlFor="years-slider" className="block text-sm text-gray-600 mb-2">
+        <label htmlFor="years-slider" className="block text-sm text-[#8aabcc] mb-2">
           Years invested:{' '}
-          <span className="font-bold text-gray-900">{years} {years === 1 ? 'year' : 'years'}</span>
+          <span className="font-bold text-[#c9a84c]">{years} {years === 1 ? 'year' : 'years'}</span>
         </label>
         <input
           id="years-slider"
@@ -38,13 +38,13 @@ export default function CompoundProfitVisual() {
           max={30}
           value={years}
           onChange={(e) => setYears(parseInt(e.target.value, 10))}
-          className="w-full h-2 rounded-full appearance-none bg-gray-200 accent-green-600 cursor-pointer"
+          className="w-full h-2 rounded-full appearance-none bg-[#2d4f8a] accent-[#c9a84c] cursor-pointer"
           aria-label="Years invested"
           aria-valuemin={1}
           aria-valuemax={30}
           aria-valuenow={years}
         />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
+        <div className="flex justify-between text-xs text-[#4a6a9a] mt-1">
           <span>1 year</span>
           <span>30 years</span>
         </div>
@@ -52,15 +52,15 @@ export default function CompoundProfitVisual() {
 
       {/* Numbers */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="rounded-xl bg-white border border-green-100 p-4">
-          <p className="text-xs font-medium text-green-700 mb-1">Compound profit</p>
-          <p className="text-xl font-bold text-green-700">{formatPounds(compound)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">Profit reinvested each year</p>
+        <div className="rounded-xl bg-[#0f1f3d] border border-[#2d4f8a] p-4">
+          <p className="text-xs font-medium text-[#c9a84c] mb-1">Compound profit</p>
+          <p className="text-xl font-bold text-[#f0d98a]">{formatDollars(compound)}</p>
+          <p className="text-xs text-[#8aabcc] mt-0.5">Profit reinvested each year</p>
         </div>
-        <div className="rounded-xl bg-white border border-gray-100 p-4">
-          <p className="text-xs font-medium text-gray-500 mb-1">Simple profit only</p>
-          <p className="text-xl font-bold text-gray-700">{formatPounds(simple)}</p>
-          <p className="text-xs text-gray-400 mt-0.5">No reinvestment</p>
+        <div className="rounded-xl bg-[#0f1f3d] border border-[#2d4f8a] p-4">
+          <p className="text-xs font-medium text-[#8aabcc] mb-1">Without reinvesting</p>
+          <p className="text-xl font-bold text-[#8aabcc]">{formatDollars(simple)}</p>
+          <p className="text-xs text-[#4a6a9a] mt-0.5">No reinvestment</p>
         </div>
       </div>
 
@@ -68,35 +68,35 @@ export default function CompoundProfitVisual() {
       <div className="space-y-3">
         <div>
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-medium text-green-700">Compound</span>
-            <span className="text-xs text-green-700">{formatPounds(compound)}</span>
+            <span className="text-xs font-medium text-[#c9a84c]">Compound</span>
+            <span className="text-xs text-[#f0d98a]">{formatDollars(compound)}</span>
           </div>
-          <div className="h-6 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-6 bg-[#0f1f3d] rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500 rounded-full transition-all duration-300"
+              className="h-full bg-[#c9a84c] rounded-full transition-[width] duration-500 ease-out"
               style={{ width: `${compoundPct}%` }}
               role="img"
-              aria-label={`Compound value: ${formatPounds(compound)}`}
+              aria-label={`Compound value: ${formatDollars(compound)}`}
             />
           </div>
         </div>
         <div>
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs font-medium text-gray-500">Simple</span>
-            <span className="text-xs text-gray-500">{formatPounds(simple)}</span>
+            <span className="text-xs font-medium text-[#8aabcc]">Without reinvesting</span>
+            <span className="text-xs text-[#8aabcc]">{formatDollars(simple)}</span>
           </div>
-          <div className="h-6 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-6 bg-[#0f1f3d] rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-300 rounded-full transition-all duration-300"
+              className="h-full bg-[#2d4f8a] rounded-full transition-[width] duration-500 ease-out"
               style={{ width: `${simplePct}%` }}
               role="img"
-              aria-label={`Simple value: ${formatPounds(simple)}`}
+              aria-label={`Without reinvesting value: ${formatDollars(simple)}`}
             />
           </div>
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-gray-400">
+      <p className="mt-4 text-xs text-[#4a6a9a]">
         The longer you stay invested, the bigger the gap between compound and simple growth.
       </p>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const PRICES = [120, 118, 125, 130, 145, 140, 135, 155, 165, 158, 170, 180];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -15,7 +15,7 @@ interface NewsEvent {
 const NEWS_EVENTS: NewsEvent[] = [
   {
     monthIndex: 3,
-    headline: 'TechHalal wins government contract worth £50m',
+    headline: 'TechHalal wins government contract worth $50m',
     explanation: 'Big contracts mean predictable revenue. Investors got excited about future earnings, so more people wanted to buy shares — pushing the price up.',
     direction: 'up',
   },
@@ -71,17 +71,22 @@ const polylinePoints = PRICES.map((p, i) => `${toX(i)},${toY(p)}`).join(' ');
 
 export default function NewsPriceChart() {
   const [activeEvent, setActiveEvent] = useState<NewsEvent | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleEventClick = (event: NewsEvent) => {
     setActiveEvent((prev) => (prev?.monthIndex === event.monthIndex ? null : event));
   };
 
   return (
-    <div className="my-8 rounded-2xl border border-gray-100 bg-gray-50 p-5">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-        TechHalal Ltd — Share price (pence), Jan–Dec
+    <div className="my-8 rounded-2xl border border-[#2d4f8a] bg-[#162550] p-5">
+      <p className="text-xs font-semibold text-[#8aabcc] uppercase tracking-wide mb-1">
+        TechHalal Ltd — Share price (cents), Jan–Dec
       </p>
-      <p className="text-xs text-gray-400 mb-4">
+      <p className="text-xs text-[#4a6a9a] mb-4">
         Click a highlighted dot to see what news caused that price movement.
       </p>
 
@@ -94,6 +99,9 @@ export default function NewsPriceChart() {
           role="img"
           aria-label="TechHalal Ltd share price chart over 12 months"
         >
+          {/* Background */}
+          <rect x={0} y={0} width={VIEWBOX_W} height={VIEWBOX_H} fill="#0f1f3d" />
+
           {/* Grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
             const y = PAD_TOP + frac * (VIEWBOX_H - PAD_TOP - PAD_BOTTOM);
@@ -104,7 +112,7 @@ export default function NewsPriceChart() {
                 y1={y}
                 x2={VIEWBOX_W - PAD_RIGHT}
                 y2={y}
-                stroke="#e5e7eb"
+                stroke="#2d4f8a"
                 strokeWidth={0.5}
               />
             );
@@ -114,10 +122,11 @@ export default function NewsPriceChart() {
           <polyline
             points={polylinePoints}
             fill="none"
-            stroke="#22c55e"
+            stroke="#c9a84c"
             strokeWidth={2}
             strokeLinejoin="round"
             strokeLinecap="round"
+            className={mounted ? 'animate-draw-line' : ''}
           />
 
           {/* Area fill */}
@@ -129,8 +138,8 @@ export default function NewsPriceChart() {
 
           <defs>
             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity={0.4} />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+              <stop offset="0%" stopColor="#c9a84c" stopOpacity={0.4} />
+              <stop offset="100%" stopColor="#c9a84c" stopOpacity={0} />
             </linearGradient>
           </defs>
 
@@ -145,16 +154,17 @@ export default function NewsPriceChart() {
               return (
                 <g key={i}>
                   {isActive && (
-                    <circle cx={x} cy={y} r={10} fill={event.direction === 'up' ? '#bbf7d0' : '#fde68a'} opacity={0.6} />
+                    <circle cx={x} cy={y} r={10} fill="#c9a84c" opacity={0.2} />
                   )}
                   <circle
                     cx={x}
                     cy={y}
                     r={5}
-                    fill={isActive ? (event.direction === 'up' ? '#16a34a' : '#d97706') : '#fff'}
-                    stroke={event.direction === 'up' ? '#16a34a' : '#d97706'}
+                    fill={isActive ? '#c9a84c' : '#2d4f8a'}
+                    stroke={isActive ? '#f0d98a' : '#c9a84c'}
                     strokeWidth={2}
                     className="cursor-pointer"
+                    style={{ transition: 'all 0.2s ease' }}
                     onClick={() => handleEventClick(event)}
                     role="button"
                     aria-label={`News event in ${MONTHS[i]}: ${event.headline}`}
@@ -172,7 +182,7 @@ export default function NewsPriceChart() {
             }
 
             return (
-              <circle key={i} cx={x} cy={y} r={2.5} fill="#22c55e" />
+              <circle key={i} cx={x} cy={y} r={2.5} fill="#c9a84c" opacity={0.6} />
             );
           })}
 
@@ -184,7 +194,7 @@ export default function NewsPriceChart() {
               y={VIEWBOX_H - 4}
               textAnchor="middle"
               fontSize={8}
-              fill="#9ca3af"
+              fill="#4a6a9a"
             >
               {month}
             </text>
@@ -194,36 +204,30 @@ export default function NewsPriceChart() {
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 mt-3 mb-4">
-        <span className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-3 h-3 rounded-full border-2 border-green-600 inline-block" />
+        <span className="flex items-center gap-1.5 text-xs text-[#8aabcc]">
+          <span className="w-3 h-3 rounded-full border-2 border-[#c9a84c] inline-block" />
           Price rose
         </span>
-        <span className="flex items-center gap-1.5 text-xs text-gray-500">
-          <span className="w-3 h-3 rounded-full border-2 border-amber-500 inline-block" />
+        <span className="flex items-center gap-1.5 text-xs text-[#8aabcc]">
+          <span className="w-3 h-3 rounded-full border-2 border-[#c9a84c] bg-[#2d4f8a] inline-block" />
           Price dipped
         </span>
       </div>
 
       {/* Callout */}
       {activeEvent ? (
-        <div
-          className={`rounded-xl border p-4 ${
-            activeEvent.direction === 'up'
-              ? 'bg-green-50 border-green-100'
-              : 'bg-amber-50 border-amber-100'
-          }`}
-        >
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+        <div className="rounded-xl border border-[#c9a84c] bg-[#1d3268] p-4 animate-fade-slide-up">
+          <p className="text-xs font-semibold text-[#8aabcc] uppercase tracking-wide mb-1">
             {MONTHS[activeEvent.monthIndex]} — News
           </p>
-          <p className={`text-sm font-semibold mb-2 ${activeEvent.direction === 'up' ? 'text-green-800' : 'text-amber-800'}`}>
+          <p className="text-sm font-semibold text-[#f0d98a] mb-2">
             {activeEvent.headline}
           </p>
-          <p className="text-sm text-gray-600">{activeEvent.explanation}</p>
+          <p className="text-sm text-[#8aabcc]">{activeEvent.explanation}</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-100 bg-white p-4 text-center">
-          <p className="text-sm text-gray-400">Click a news event to see how it moved the price.</p>
+        <div className="rounded-xl border border-[#2d4f8a] bg-[#0f1f3d] p-4 text-center">
+          <p className="text-sm text-[#4a6a9a]">Click a news event to see how it moved the price.</p>
         </div>
       )}
     </div>

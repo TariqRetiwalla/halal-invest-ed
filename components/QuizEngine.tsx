@@ -63,16 +63,12 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
       <div>
         {/* Score banner */}
         <div
-          className={`rounded-2xl p-5 mb-8 text-center ${
-            score >= 75
-              ? 'bg-green-50 border border-green-100'
-              : 'bg-amber-50 border border-amber-100'
-          }`}
+          className="rounded-2xl bg-[#2a2010] border border-[#c9a84c] p-5 mb-8 text-center"
         >
-          <p className={`text-2xl font-bold mb-1 ${score >= 75 ? 'text-green-700' : 'text-amber-700'}`}>
+          <p className="text-2xl font-bold text-[#f0d98a] mb-1">
             {score}%
           </p>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-[#8aabcc]">
             You got {correctCount} out of {questions.length} questions right.
           </p>
         </div>
@@ -84,21 +80,21 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
             const isCorrect = fb?.correct ?? false;
 
             return (
-              <div key={q.id} className="rounded-2xl border border-gray-100 p-5">
-                <p className="text-sm font-semibold text-gray-900 mb-3">{q.question}</p>
+              <div key={q.id} className="rounded-2xl border border-[#2d4f8a] bg-[#162550] p-5">
+                <p className="text-sm font-semibold text-[#e8eeff] mb-3">{q.question}</p>
 
                 <div className="space-y-2 mb-4">
                   {q.options.map((opt) => {
                     const wasSelected = selected[q.id] === opt.id;
-                    let borderClass = 'border-gray-100 bg-gray-50';
-                    let textClass = 'text-gray-700';
+                    let borderClass = 'border-[#2d4f8a] bg-[#0f1f3d]';
+                    let textClass = 'text-[#8aabcc]';
 
                     if (wasSelected && isCorrect) {
-                      borderClass = 'border-green-300 bg-green-50';
-                      textClass = 'text-green-800';
+                      borderClass = 'border-[#2a7a4b] bg-[#0a2010]';
+                      textClass = 'text-[#4aad70]';
                     } else if (wasSelected && !isCorrect) {
-                      borderClass = 'border-amber-300 bg-amber-50';
-                      textClass = 'text-amber-800';
+                      borderClass = 'border-[#8b2a2a] bg-[#1a0808]';
+                      textClass = 'text-[#f08080]';
                     }
 
                     return (
@@ -110,11 +106,11 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
                         {wasSelected && (
                           <span className="ml-auto flex-shrink-0">
                             {isCorrect ? (
-                              <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <svg className="w-4 h-4 text-[#4aad70]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             ) : (
-                              <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <svg className="w-4 h-4 text-[#f08080]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             )}
@@ -126,8 +122,8 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
                 </div>
 
                 {fb?.explanation && (
-                  <div className={`rounded-xl px-4 py-3 text-sm ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-amber-50 text-amber-800'}`}>
-                    {fb.explanation}
+                  <div className={`rounded-xl px-4 py-3 text-sm ${isCorrect ? 'bg-[#0a2010] border border-[#2a7a4b] text-[#4aad70]' : 'bg-[#1a0808] border border-[#8b2a2a] text-[#f08080]'}`}>
+                    <p className="text-[#8aabcc]">{fb.explanation}</p>
                   </div>
                 )}
               </div>
@@ -137,7 +133,7 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
 
         <button
           onClick={() => onComplete(score)}
-          className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+          className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold bg-[#c9a84c] text-[#0f1f3d] hover:bg-[#b5923a] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1f3d]"
         >
           Continue
         </button>
@@ -150,8 +146,8 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
       <div className="space-y-8 mb-8">
         {questions.map((q, qIndex) => (
           <fieldset key={q.id}>
-            <legend className="text-sm font-semibold text-gray-900 mb-3">
-              <span className="text-gray-400 font-normal mr-1">Q{qIndex + 1}.</span>
+            <legend className="text-sm font-semibold text-[#e8eeff] mb-3">
+              <span className="text-[#4a6a9a] font-normal mr-1">Q{qIndex + 1}.</span>
               {q.question}
             </legend>
 
@@ -161,10 +157,10 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
                 return (
                   <label
                     key={opt.id}
-                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 cursor-pointer transition-all duration-200 ease-out ${
                       isSelected
-                        ? 'border-green-400 bg-green-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-[#c9a84c] bg-[#2a2010] text-[#f0d98a]'
+                        : 'border-[#2d4f8a] bg-[#0f1f3d] text-[#8aabcc] hover:border-[#c9a84c] hover:text-[#e8eeff]'
                     }`}
                   >
                     <input
@@ -177,16 +173,16 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
                       aria-label={opt.text}
                     />
                     <span
-                      className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        isSelected ? 'border-green-500 bg-green-500' : 'border-gray-300'
+                      className={`flex-shrink-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all duration-200 ease-out ${
+                        isSelected ? 'border-[#c9a84c] bg-[#c9a84c]' : 'border-[#2d4f8a]'
                       }`}
                       aria-hidden="true"
                     >
                       {isSelected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#0f1f3d]" />
                       )}
                     </span>
-                    <span className={`text-sm ${isSelected ? 'text-green-800 font-medium' : 'text-gray-700'}`}>
+                    <span className={`text-sm ${isSelected ? 'text-[#f0d98a] font-medium' : 'text-[#8aabcc]'}`}>
                       {opt.text}
                     </span>
                   </label>
@@ -201,17 +197,17 @@ export default function QuizEngine({ lessonNumber, onComplete }: QuizEngineProps
         onClick={handleSubmit}
         disabled={!allAnswered || submitState === 'submitting'}
         aria-disabled={!allAnswered}
-        className={`w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2 ${
+        className={`w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1f3d] ${
           allAnswered
-            ? 'bg-green-600 text-white hover:bg-green-700'
-            : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            ? 'bg-[#c9a84c] text-[#0f1f3d] hover:bg-[#b5923a]'
+            : 'bg-[#162550] text-[#4a6a9a] opacity-40 cursor-not-allowed'
         }`}
       >
         {submitState === 'submitting' ? 'Checking your answers…' : 'Submit answers'}
       </button>
 
       {!allAnswered && (
-        <p className="mt-2 text-xs text-gray-400">Answer all questions to submit.</p>
+        <p className="mt-2 text-xs text-[#4a6a9a]">Answer all questions to submit.</p>
       )}
     </div>
   );

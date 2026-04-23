@@ -40,8 +40,8 @@ function Lesson1Content() {
         of something called <strong>inflation</strong> — the general rise in prices over time.
       </p>
       <p>
-        A pound today buys less than a pound ten years ago. If you kept £100 under your mattress for
-        ten years, you'd still have £100 in notes — but you'd be able to buy less with it. Prices
+        A dollar today buys less than a dollar ten years ago. If you kept $100 under your mattress for
+        ten years, you'd still have $100 in notes — but you'd be able to buy less with it. Prices
         for food, clothes, and everything else will have gone up.
       </p>
       <p>
@@ -60,8 +60,8 @@ function Lesson1Content() {
       </p>
       <p>
         The second is <strong>riba</strong> (interest) — when money earns money automatically, with
-        no link to any real work, real ownership, or real risk. You lend £100, and the rules say you
-        must always get back £110, no matter what. Islam forbids this because it's unfair — the
+        no link to any real work, real ownership, or real risk. You lend $100, and the rules say you
+        must always get back $110, no matter what. Islam forbids this because it's unfair — the
         lender always wins, and the borrower takes all the risk.
       </p>
       <p>
@@ -93,7 +93,7 @@ function Lesson2Content() {
       <h2>What is a share?</h2>
       <p>
         Imagine you want to start a bakery, but you don't have enough money to buy all the equipment
-        on your own. You could ask ten friends to each chip in £100. In return, each friend owns a
+        on your own. You could ask ten friends to each chip in $100. In return, each friend owns a
         small piece — a <strong>share</strong> — of the bakery.
       </p>
       <p>
@@ -416,8 +416,8 @@ export default function LessonPage() {
   if (!isValidId) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
-        <p className="text-gray-500 text-sm mb-4">That lesson doesn't exist.</p>
-        <Link href="/learn" className="text-green-700 text-sm font-medium underline hover:text-green-800">
+        <p className="text-[#8aabcc] text-sm mb-4">That lesson doesn't exist.</p>
+        <Link href="/learn" className="text-[#c9a84c] text-sm font-medium underline hover:text-[#f0d98a]">
           Back to all lessons
         </Link>
       </div>
@@ -428,11 +428,11 @@ export default function LessonPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
         <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-gray-100 rounded w-24" />
-          <div className="h-8 bg-gray-100 rounded w-2/3" />
-          <div className="h-4 bg-gray-100 rounded w-full" />
-          <div className="h-4 bg-gray-100 rounded w-5/6" />
-          <div className="h-4 bg-gray-100 rounded w-full" />
+          <div className="h-4 bg-[#162550] rounded w-24" />
+          <div className="h-8 bg-[#162550] rounded w-2/3" />
+          <div className="h-4 bg-[#162550] rounded w-full" />
+          <div className="h-4 bg-[#162550] rounded w-5/6" />
+          <div className="h-4 bg-[#162550] rounded w-full" />
         </div>
       </div>
     );
@@ -443,18 +443,18 @@ export default function LessonPage() {
   if (thisLesson && !thisLesson.accessible) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
-        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="w-12 h-12 rounded-full bg-[#162550] border border-[#2d4f8a] flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6 text-[#c9a84c]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-gray-900 mb-2">This lesson is locked</h1>
-        <p className="text-sm text-gray-500 mb-6">
+        <h1 className="text-xl font-bold text-[#e8eeff] mb-2">This lesson is locked</h1>
+        <p className="text-sm text-[#8aabcc] mb-6">
           Complete the previous lesson and its quiz to unlock this one.
         </p>
         <Link
           href="/learn"
-          className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+          className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-[#c9a84c] text-[#0f1f3d] hover:bg-[#b5923a] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1f3d]"
         >
           Back to all lessons
         </Link>
@@ -472,7 +472,7 @@ export default function LessonPage() {
       {/* Back link */}
       <Link
         href="/learn"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 rounded"
+        className="inline-flex items-center gap-1.5 text-sm text-[#8aabcc] hover:text-[#c9a84c] mb-8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] rounded transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -482,21 +482,21 @@ export default function LessonPage() {
 
       {/* Lesson header */}
       <div className="mb-8">
-        <span className="inline-block text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-full px-3 py-1 mb-3">
+        <span className="inline-block text-xs font-semibold text-[#8aabcc] bg-[#2d4f8a] rounded-full px-3 py-1 mb-3">
           Lesson {lessonNumber}
         </span>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-snug">{title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-[#e8eeff] leading-snug">{title}</h1>
       </div>
 
       {/* Lesson content */}
-      <div className="lesson-prose mb-12">
+      <div className="lesson-prose bg-[#162550] border border-[#2d4f8a] rounded-2xl p-6 mb-12">
         <LessonContent />
       </div>
 
       {/* Quiz */}
-      <div className="border-t border-gray-100 pt-10">
-        <h2 className="text-xl font-bold text-gray-900 mb-2">Quiz</h2>
-        <p className="text-sm text-gray-500 mb-6">
+      <div className="border-t border-[#2d4f8a] pt-10">
+        <h2 className="text-xl font-bold text-[#e8eeff] mb-2">Quiz</h2>
+        <p className="text-sm text-[#8aabcc] mb-6">
           Answer all questions to complete this lesson.
         </p>
         <QuizEngine lessonNumber={lessonNumber} onComplete={handleQuizComplete} />
@@ -504,11 +504,11 @@ export default function LessonPage() {
 
       {/* Navigation */}
       {quizComplete && (
-        <div className="mt-10 flex justify-end">
+        <div className="mt-10 flex justify-end gap-3">
           {hasNext && nextLesson?.accessible ? (
             <Link
               href={`/learn/${lessonNumber + 1}`}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium bg-[#c9a84c] text-[#0f1f3d] hover:bg-[#b5923a] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1f3d]"
             >
               Next lesson
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -518,7 +518,7 @@ export default function LessonPage() {
           ) : (
             <Link
               href="/learn"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg text-sm font-medium border border-[#2d4f8a] text-[#8aabcc] hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f1f3d]"
             >
               Back to lessons
             </Link>
