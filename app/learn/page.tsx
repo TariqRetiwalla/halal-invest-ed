@@ -1,10 +1,168 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+
+interface Lesson {
+  number: number;
+  title: string;
+  accessible: boolean;
+  completed: boolean;
+  quizScore: number | null;
+}
+
+function LessonCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-5 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-1/4 mb-3" />
+      <div className="h-5 bg-gray-200 rounded w-3/4 mb-4" />
+      <div className="h-9 bg-gray-200 rounded w-24" />
+    </div>
+  );
+}
+
 export default function LearnPage() {
+  const router = useRouter();
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/lessons')
+      .then((res) => {
+        if (res.status === 401) {
+          router.push('/auth/login?redirect=/learn');
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) {
+          setLessons(data.lessons);
+          setLoading(false);
+        }
+      })
+      .catch(() => setLoading(false));
+  }, [router]);
+
+  const completedCount = lessons.filter((l) => l.completed).length;
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Lessons</h1>
-      <p className="text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-100 p-6">
-        The 5-lesson curriculum will be built in Sprint 2. Check back soon!
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">Your lessons</h1>
+      <p className="text-sm text-gray-500 mb-6">
+        Work through each lesson in order and complete the quiz to unlock the next one.
       </p>
+
+      {/* Progress bar */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-700">
+            {loading ? '— of 5 lessons complete' : `${completedCount} of 5 lessons complete`}
+          </span>
+          {!loading && (
+            <span className="text-sm text-gray-400">{Math.round((completedCount / 5) * 100)}%</span>
+          )}
+        </div>
+        <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 rounded-full transition-all duration-500"
+            style={{ width: loading ? '0%' : `${(completedCount / 5) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Lesson cards */}
+      <div className="flex flex-col gap-4">
+        {loading
+          ? Array.from({ length: 5 }).map((_, i) => <LessonCardSkeleton key={i} />)
+          : lessons.map((lesson) => {
+              if (lesson.completed) {
+                return (
+                  <div
+                    key={lesson.number}
+                    className="rounded-2xl border border-green-100 bg-green-50 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
+                        aria-hidden="true"
+                      >
+                        <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentWidth" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </span>
+                      <div>
+                        <p className="text-xs font-medium text-green-700 mb-0.5">
+                          Lesson {lesson.number}
+                        </p>
+                        <p className="text-sm font-semibold text-gray-900">{lesson.title}</p>
+                        {lesson.quizScore !== null && (
+                          <p className="text-xs text-green-700 mt-1">Score: {lesson.quizScore}%</p>
+                        )}
+                      </div>
+                    </div>
+                    <Link
+                      href={`/learn/${lesson.number}`}
+                      className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-white border border-green-200 text-green-700 hover:bg-green-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
+                    >
+                      Review
+                    </Link>
+                  </div>
+                );
+              }
+
+              if (lesson.accessible) {
+                return (
+                  <div
+                    key={lesson.number}
+                    className="rounded-2xl border border-gray-200 bg-white p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-gray-400 mb-0.5">
+                        Lesson {lesson.number}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-900">{lesson.title}</p>
+                    </div>
+                    <Link
+                      href={`/learn/${lesson.number}`}
+                      className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                    >
+                      Start
+                    </Link>
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={lesson.number}
+                  className="rounded-2xl border border-gray-100 bg-gray-50 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 opacity-60"
+                  aria-disabled="true"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center"
+                      aria-hidden="true"
+                    >
+                      <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </span>
+                    <div>
+                      <p className="text-xs font-medium text-gray-400 mb-0.5">
+                        Lesson {lesson.number}
+                      </p>
+                      <p className="text-sm font-semibold text-gray-500">{lesson.title}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Complete the previous lesson to unlock
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+      </div>
     </div>
   );
 }

@@ -24,3 +24,44 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.lesson-prose .prose-content h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.lesson-prose .prose-content h2:first-child {
+  margin-top: 0;
+}
+
+.lesson-prose .prose-content p {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.lesson-prose .prose-content ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.lesson-prose .prose-content li {
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #374151;
+  margin-bottom: 0.375rem;
+}
+
+.lesson-prose .prose-content strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.lesson-prose .prose-content em {
+  font-style: italic;
+}

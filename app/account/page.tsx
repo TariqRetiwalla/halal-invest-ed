@@ -1,7 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+
+interface LessonSummary {
+  number: number;
+  title: string;
+  accessible: boolean;
+  completed: boolean;
+  quizScore: number | null;
+}
 
 type Tab = 'stats' | 'profile' | 'club';
 
@@ -14,6 +23,18 @@ const TABS: { id: Tab; label: string }[] = [
 export default function AccountPage() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('stats');
+  const [lessons, setLessons] = useState<LessonSummary[]>([]);
+  const [lessonsLoading, setLessonsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/lessons')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setLessons(data.lessons);
+        setLessonsLoading(false);
+      })
+      .catch(() => setLessonsLoading(false));
+  }, []);
 
   if (loading) {
     return (
@@ -79,13 +100,62 @@ export default function AccountPage() {
           hidden={activeTab !== 'stats'}
         >
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Stats</h2>
-          <p className="text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-100 p-6">
-            Lesson progress and quiz scores will appear here once you complete lessons.{' '}
-            <a href="/learn" className="text-green-700 underline font-medium hover:text-green-800">
-              Start learning
-            </a>
-            .
-          </p>
+
+          {lessonsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-4 animate-pulse">
+                  <div className="h-3.5 bg-gray-200 rounded w-2/3" />
+                </div>
+              ))}
+            </div>
+          ) : lessons.length === 0 ? (
+            <p className="text-sm text-gray-500 bg-gray-50 rounded-xl border border-gray-100 p-6">
+              No lesson data yet.{' '}
+              <Link href="/learn" className="text-green-700 underline font-medium hover:text-green-800">
+                Start learning
+              </Link>
+              .
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {lessons.map((lesson) => {
+                let statusLabel: string;
+                let statusClass: string;
+
+                if (lesson.completed) {
+                  statusLabel = 'Complete';
+                  statusClass = 'text-green-700';
+                } else if (lesson.accessible) {
+                  statusLabel = 'In progress';
+                  statusClass = 'text-gray-400';
+                } else {
+                  statusLabel = 'Not started';
+                  statusClass = 'text-gray-300';
+                }
+
+                return (
+                  <div
+                    key={lesson.number}
+                    className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs text-gray-400 mb-0.5">Lesson {lesson.number}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{lesson.title}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className={`text-xs font-semibold ${statusClass}`}>
+                        {lesson.completed ? `${statusLabel} ✓` : statusLabel}
+                      </p>
+                      {lesson.quizScore !== null && (
+                        <p className="text-xs text-gray-400 mt-0.5">Score: {lesson.quizScore}%</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Profile */}
