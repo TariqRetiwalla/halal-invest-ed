@@ -154,7 +154,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       response.islamicPrinciple = company.islamicPrinciple;
     }
 
-    if (mistakeType === 1 && (attemptNumber === 2 || blocked)) {
+    if (mistakeType === 2 || (mistakeType === 1 && (attemptNumber === 2 || blocked))) {
       response.explanation = company.explanation;
     }
 

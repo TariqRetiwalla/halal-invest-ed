@@ -74,6 +74,35 @@ export default function FeedbackPanel({
     );
   }
 
+  // Blocked — second Type 1 failure (haram company, attempt 2) — checked BEFORE mistakeType===1
+  if (blocked) {
+    return (
+      <div className="animate-fade-slide-up bg-[#2a0808] border border-[#8b2a2a] rounded-2xl p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[#f08080] text-lg" aria-hidden="true">✗</span>
+          <h3 className="text-[#f08080] font-semibold text-base">
+            Let&apos;s go through this together.
+          </h3>
+        </div>
+        {explanation && (
+          <p className="text-sm text-[#8aabcc]">{explanation}</p>
+        )}
+        {lessonCallback && <LessonCallbackLink lessonCallback={lessonCallback} />}
+        <div className="rounded-lg bg-[#1a0404] border border-[#8b2a2a] px-3 py-2 text-xs text-[#f08080] font-medium">
+          This company cannot be added to a halal portfolio
+        </div>
+        <button
+          type="button"
+          onClick={onNext}
+          aria-label="Move on and try the next company"
+          className="w-full rounded-xl bg-[#8b2a2a] hover:bg-[#a03a3a] text-[#e8eeff] py-2.5 text-sm font-semibold transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c]"
+        >
+          Try the next company
+        </button>
+      </div>
+    );
+  }
+
   // Type 1 — passed a haram company, first attempt
   if (mistakeType === 1) {
     return (
@@ -129,35 +158,6 @@ export default function FeedbackPanel({
           className="w-full rounded-xl bg-[#2d4f8a] hover:bg-[#3d5f9a] text-[#e8eeff] py-2.5 text-sm font-semibold transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c]"
         >
           Reconsider
-        </button>
-      </div>
-    );
-  }
-
-  // Blocked — second Type 1 failure (haram company, attempt 2)
-  if (blocked) {
-    return (
-      <div className="animate-fade-slide-up bg-[#2a0808] border border-[#8b2a2a] rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <span className="text-[#f08080] text-lg" aria-hidden="true">✗</span>
-          <h3 className="text-[#f08080] font-semibold text-base">
-            Let&apos;s go through this together.
-          </h3>
-        </div>
-        {explanation && (
-          <p className="text-sm text-[#8aabcc]">{explanation}</p>
-        )}
-        {lessonCallback && <LessonCallbackLink lessonCallback={lessonCallback} />}
-        <div className="rounded-lg bg-[#1a0404] border border-[#8b2a2a] px-3 py-2 text-xs text-[#f08080] font-medium">
-          This company cannot be added to a halal portfolio
-        </div>
-        <button
-          type="button"
-          onClick={onNext}
-          aria-label="Move on and try the next company"
-          className="w-full rounded-xl bg-[#8b2a2a] hover:bg-[#a03a3a] text-[#e8eeff] py-2.5 text-sm font-semibold transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c]"
-        >
-          Try the next company
         </button>
       </div>
     );
