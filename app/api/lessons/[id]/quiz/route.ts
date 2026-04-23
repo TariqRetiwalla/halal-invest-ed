@@ -15,6 +15,28 @@ export const POST = withAuth(async (req: NextRequest, { user, params }) => {
       return NextResponse.json({ error: 'Lesson number must be between 1 and 5' }, { status: 400 });
     }
 
+    const userId = user.sub;
+
+    const [completedRows, membership] = await Promise.all([
+      prisma.lessonProgress.findMany({ where: { userId } }),
+      prisma.classMembership.findUnique({ where: { studentId: userId } }),
+    ]);
+
+    const completedNumbers = new Set(completedRows.map((r) => r.lessonNumber));
+    const prevCompleted = lessonNumber === 1 || completedNumbers.has(lessonNumber - 1);
+    let accessible = prevCompleted;
+
+    if (membership) {
+      const lockRow = await prisma.classLessonLock.findUnique({
+        where: { classId_lessonNumber: { classId: membership.classId, lessonNumber } },
+      });
+      accessible = prevCompleted && !(lockRow?.isLocked ?? true);
+    }
+
+    if (!accessible) {
+      return NextResponse.json({ error: 'Lesson is not accessible' }, { status: 403 });
+    }
+
     const questions = getLessonQuiz(lessonNumber);
 
     let body: unknown;
@@ -58,7 +80,6 @@ export const POST = withAuth(async (req: NextRequest, { user, params }) => {
     });
 
     const score = Math.round((correctCount / questions.length) * 100);
-    const userId = user.sub;
 
     await prisma.$transaction([
       prisma.quizAttempt.create({

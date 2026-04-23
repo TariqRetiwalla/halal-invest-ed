@@ -405,11 +405,28 @@ export default function LessonPage() {
       .catch(() => setLoading(false));
   }, [isValidId, lessonNumber, router]);
 
-  const handleQuizComplete = async (score: number) => {
+  const handleQuizComplete = async (_score: number) => {
     setQuizComplete(true);
     try {
-      await fetch(`/api/lessons/${lessonNumber}/complete`, { method: 'POST' });
+      const res = await fetch('/api/lessons');
+      if (res.ok) {
+        const data = await res.json();
+        const updated: Lesson[] = data.lessons;
+        setLessons(updated);
+
+        if (lessonNumber === 5) {
+          router.push('/play');
+          return;
+        }
+
+        const next = updated.find((l) => l.number === lessonNumber + 1);
+        if (next?.accessible) {
+          router.push(`/learn/${lessonNumber + 1}`);
+        }
+        // next lesson teacher-locked: stay on page, nav buttons appear below
+      }
     } catch {
+      // network error — nav buttons will appear as fallback
     }
   };
 
