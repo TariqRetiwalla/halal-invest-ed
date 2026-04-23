@@ -18,7 +18,8 @@ interface FeedbackPanelProps {
     islamicPrinciple?: string;
     lessonCallback?: LessonCallback;
     explanation?: string;
-    profitPct: number;
+    cashBalance: number;
+    cashDelta: number;
   };
   companyName: string;
   onNext: () => void;
@@ -43,7 +44,7 @@ export default function FeedbackPanel({
   onNext,
   onRetry,
 }: FeedbackPanelProps) {
-  const { correct, mistakeType, blocked, hintText, islamicPrinciple, lessonCallback, explanation, profitPct } =
+  const { correct, mistakeType, blocked, hintText, islamicPrinciple, lessonCallback, explanation, cashBalance, cashDelta } =
     feedback;
 
   // Correct answer
@@ -58,9 +59,8 @@ export default function FeedbackPanel({
           {companyName} passes all three criteria. Great screening.
         </p>
         <p className="text-sm font-medium text-[#4aad70]">
-          Portfolio:{' '}
-          {profitPct >= 0 ? '+' : ''}
-          {profitPct.toFixed(2)}%
+          Cash: ${cashBalance.toLocaleString()}{' '}
+          ({cashDelta >= 0 ? '+' : ''}${cashDelta})
         </p>
         <button
           type="button"

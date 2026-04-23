@@ -7,6 +7,7 @@ import CompanyCard from '@/components/simulator/CompanyCard';
 import AnswerButtons from '@/components/simulator/AnswerButtons';
 import FeedbackPanel from '@/components/simulator/FeedbackPanel';
 import ScreeningHistory from '@/components/simulator/ScreeningHistory';
+import TradingPhase from '@/components/simulator/TradingPhase';
 import type { HistoryEntry } from '@/components/simulator/ScreeningHistory';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -19,6 +20,12 @@ interface PublicCompany {
   mainIncomeSource: string;
   interestIncomeLevel: 'Low' | 'Medium' | 'High';
   debtLevel: 'Low' | 'Medium' | 'High';
+}
+
+interface WatchlistCompany {
+  id: string;
+  name: string;
+  industry: string;
 }
 
 interface AnswerResponse {
@@ -34,7 +41,8 @@ interface AnswerResponse {
     href: string;
   };
   explanation?: string;
-  profitPct: number;
+  cashBalance: number;
+  cashDelta: number;
 }
 
 interface AccessResponse {
@@ -49,6 +57,7 @@ type SimulatorPhase =
   | 'waiting'
   | 'evaluating'
   | 'feedback'
+  | 'trading'
   | 'done';
 
 // ─── Fisher-Yates shuffle ─────────────────────────────────────────────────────
@@ -149,7 +158,17 @@ function LockedState({ lessonsComplete, totalLessons }: { lessonsComplete: numbe
   );
 }
 
-function DoneState({ profitPct, history, onRestart }: { profitPct: number; history: HistoryEntry[]; onRestart: () => void }) {
+function DoneState({
+  screeningCash,
+  finalTradingCash,
+  history,
+  onRestart,
+}: {
+  screeningCash: number;
+  finalTradingCash: number;
+  history: HistoryEntry[];
+  onRestart: () => void;
+}) {
   const correct = history.filter((h) => h.correct).length;
   const pct = history.length > 0 ? Math.round((correct / history.length) * 100) : 0;
 
@@ -174,12 +193,16 @@ function DoneState({ profitPct, history, onRestart }: { profitPct: number; histo
 
         <div className="w-full grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-[#1d3268] border border-[#2d4f8a] p-4">
-            <p className="text-xs text-[#4a6a9a] mb-1">Portfolio return</p>
-            <p className={`text-xl font-bold ${profitPct >= 0 ? 'text-[#4aad70]' : 'text-[#f08080]'}`}>
-              {profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%
-            </p>
+            <p className="text-xs text-[#4a6a9a] mb-1">Cash from screening</p>
+            <p className="text-xl font-bold text-[#c9a84c]">${screeningCash.toLocaleString()}</p>
           </div>
           <div className="rounded-xl bg-[#1d3268] border border-[#2d4f8a] p-4">
+            <p className="text-xs text-[#4a6a9a] mb-1">Final portfolio value</p>
+            <p className={`text-xl font-bold ${finalTradingCash >= screeningCash ? 'text-[#4aad70]' : 'text-[#f08080]'}`}>
+              ${finalTradingCash.toLocaleString()}
+            </p>
+          </div>
+          <div className="rounded-xl bg-[#1d3268] border border-[#2d4f8a] p-4 col-span-2">
             <p className="text-xs text-[#4a6a9a] mb-1">Accuracy</p>
             <p className="text-xl font-bold text-[#c9a84c]">{pct}%</p>
           </div>
@@ -225,7 +248,9 @@ export default function PlayPage() {
   const [attemptNumber, setAttemptNumber] = useState<1 | 2>(1);
   const [feedback, setFeedback] = useState<AnswerResponse | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [profitPct, setProfitPct] = useState(0);
+  const [cashBalance, setCashBalance] = useState(500);
+  const [watchlist, setWatchlist] = useState<WatchlistCompany[]>([]);
+  const [finalTradingCash, setFinalTradingCash] = useState(0);
 
   // ── Step 1: check access ───────────────────────────────────────────────────
   useEffect(() => {
@@ -277,12 +302,13 @@ export default function PlayPage() {
           return;
         }
 
-        const { sessionId: sid } = await sessionRes.json();
+        const { sessionId: sid, startingCash } = await sessionRes.json();
         const { companies: raw } = await companiesRes.json();
 
         if (cancelled) return;
 
         setSessionId(sid);
+        setCashBalance(startingCash ?? 500);
         setCompanies(shuffle(raw));
         setPhase('waiting');
       } catch {
@@ -321,14 +347,13 @@ export default function PlayPage() {
 
       const data: AnswerResponse = await res.json();
 
-      setProfitPct(data.profitPct);
+      setCashBalance(data.cashBalance);
       setFeedback(data);
       setPhase('feedback');
 
       const studentSaidPass = answers.every(Boolean);
 
       if (data.correct || data.blocked) {
-        // Add to history and prepare for next company on next click
         setHistory((prev) => [
           ...prev,
           {
@@ -337,6 +362,13 @@ export default function PlayPage() {
             correct: data.correct,
           },
         ]);
+        // Correct halal pass → add to trading watchlist
+        if (data.correct && studentSaidPass) {
+          setWatchlist((prev) => {
+            if (prev.some((c) => c.id === currentCompany.id)) return prev;
+            return [...prev, { id: currentCompany.id, name: currentCompany.name, industry: currentCompany.industry }];
+          });
+        }
       } else if (data.mistakeType === 1) {
         // Give a second attempt
         setAttemptNumber(2);
@@ -355,7 +387,7 @@ export default function PlayPage() {
     setAttemptNumber(1);
 
     if (next >= companies.length) {
-      setPhase('done');
+      setPhase('trading');
     } else {
       setCurrentIndex(next);
       setPhase('waiting');
@@ -377,8 +409,10 @@ export default function PlayPage() {
     setAttemptNumber(1);
     setFeedback(null);
     setHistory([]);
-    setProfitPct(0);
-    setAccessible(true); // re-trigger init effect via toggle trick
+    setCashBalance(500);
+    setWatchlist([]);
+    setFinalTradingCash(0);
+    setSessionKey((k) => k + 1);
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
@@ -407,10 +441,24 @@ export default function PlayPage() {
     return <SkeletonLoader />;
   }
 
+  if (phase === 'trading') {
+    return (
+      <TradingPhase
+        watchlist={watchlist}
+        startingCash={cashBalance}
+        onComplete={(finalCash) => {
+          setFinalTradingCash(finalCash);
+          setPhase('done');
+        }}
+      />
+    );
+  }
+
   if (phase === 'done') {
     return (
       <DoneState
-        profitPct={profitPct}
+        screeningCash={cashBalance}
+        finalTradingCash={finalTradingCash}
         history={history}
         onRestart={handleRestart}
       />
@@ -425,11 +473,8 @@ export default function PlayPage() {
       {/* Page header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold text-[#e8eeff]">Halal Screening Simulator</h1>
-        <span
-          className={`text-sm font-semibold ${profitPct >= 0 ? 'text-[#4aad70]' : 'text-[#f08080]'}`}
-          aria-live="polite"
-        >
-          Portfolio: {profitPct >= 0 ? '+' : ''}{profitPct.toFixed(2)}%
+        <span className="text-sm font-semibold text-[#c9a84c]" aria-live="polite">
+          Cash: ${cashBalance.toLocaleString()}
         </span>
       </div>
 

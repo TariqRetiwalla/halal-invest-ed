@@ -111,7 +111,7 @@ model SimulatorSession {
   correct         Boolean
   mistakeType     Int?
   attemptNumber   Int
-  profitPct       Float?
+  cashBalance     Float?  @map("profitPct")
   createdAt       DateTime @default(now())
 
   @@map("simulator_sessions")

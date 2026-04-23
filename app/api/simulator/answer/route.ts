@@ -7,9 +7,6 @@ function randomBetween(min: number, max: number): number {
   return Math.random() * (max - min) + min;
 }
 
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
-}
 
 export const POST = withAuth(async (req: NextRequest, { user }) => {
   try {
@@ -88,31 +85,26 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       blocked = true;
     }
 
-    // Calculate profitPct
+    // Calculate cashBalance
     const lastSession = await prisma.simulatorSession.findFirst({
       where: { userId: user.sub },
       orderBy: { createdAt: 'desc' },
-      select: { profitPct: true },
+      select: { cashBalance: true },
     });
-    const currentProfitPct = lastSession?.profitPct ?? 0.0;
+    const currentCash = lastSession?.cashBalance ?? 500;
 
-    let delta = 0;
-    if (isCorrect && studentPasses) {
-      // Correct pass (halal company, student passed)
-      delta = randomBetween(4, 9);
-    } else if (isCorrect && !studentPasses) {
-      // Correct block (haram company, student blocked)
-      delta = randomBetween(1, 3);
-    } else if (mistakeType === 1 && !blocked) {
-      // Type 1 mistake on attempt 1 (passed haram)
-      delta = -randomBetween(6, 12);
+    let cashDelta = 0;
+    if (isCorrect) {
+      cashDelta = Math.round(randomBetween(50, 100));
     } else if (blocked) {
-      // Second Type 1 — hard-blocked on attempt 2
-      delta = -randomBetween(10, 18);
+      cashDelta = -Math.round(randomBetween(75, 150));
+    } else if (mistakeType === 1) {
+      cashDelta = -Math.round(randomBetween(50, 100));
+    } else if (mistakeType === 2) {
+      cashDelta = -Math.round(randomBetween(25, 50));
     }
-    // Type 2 mistake: no change
 
-    const newProfitPct = round2(currentProfitPct + delta);
+    const newCashBalance = Math.round(currentCash + cashDelta);
 
     await prisma.simulatorSession.create({
       data: {
@@ -120,9 +112,9 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
         companyId,
         studentDecision: studentPasses ? 'pass' : 'fail',
         correct: isCorrect,
-        mistakeType: mistakeType,
+        mistakeType,
         attemptNumber,
-        profitPct: newProfitPct,
+        cashBalance: newCashBalance,
       },
     });
 
@@ -130,7 +122,8 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       correct: boolean;
       mistakeType: number | null;
       blocked: boolean;
-      profitPct: number;
+      cashBalance: number;
+      cashDelta: number;
       hintText?: string;
       islamicPrinciple?: string;
       lessonCallback?: {
@@ -146,7 +139,8 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       correct: isCorrect,
       mistakeType,
       blocked,
-      profitPct: newProfitPct,
+      cashBalance: newCashBalance,
+      cashDelta,
     };
 
     if (mistakeType === 1 && attemptNumber === 1) {

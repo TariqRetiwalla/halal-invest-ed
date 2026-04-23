@@ -26,7 +26,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       return NextResponse.json({ error: 'Simulator not yet unlocked' }, { status: 403 });
     }
 
-    return NextResponse.json({ sessionId: crypto.randomUUID() });
+    return NextResponse.json({ sessionId: crypto.randomUUID(), startingCash: 500 });
   } catch (error) {
     if (process.env.NODE_ENV !== 'production') console.error('[POST /api/simulator/session]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
