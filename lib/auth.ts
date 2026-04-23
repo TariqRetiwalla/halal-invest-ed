@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set');
+}
 const JWT_SECRET = process.env.JWT_SECRET as string;
+
 const COOKIE_NAME = 'auth-token';
 
 export interface JwtPayload {
@@ -9,34 +13,17 @@ export interface JwtPayload {
   username: string;
   role: 'STUDENT' | 'TEACHER';
   ageRange?: 'UNDER_13' | 'AGE_13_17' | 'AGE_18_PLUS' | null;
-  iat: number;
-  exp: number;
+  iat?: number;
+  exp?: number;
 }
 
 export function signToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-  const now = Date.now();
-  const fullPayload: JwtPayload = {
-    ...payload,
-    iat: now,
-    exp: now + 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-  };
-  // jsonwebtoken expects iat/exp in seconds — but we follow the spec from agent instructions
-  // which uses ms. We use sign with no automatic exp to keep our custom payload intact.
-  return jwt.sign(fullPayload, JWT_SECRET, { algorithm: 'HS256' });
+  return jwt.sign(payload, JWT_SECRET, { algorithm: 'HS256', expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
-      algorithms: ['HS256'],
-    }) as JwtPayload;
-
-    // Check expiry manually since exp is stored in ms (per agent instructions)
-    if (decoded.exp < Date.now()) {
-      return null;
-    }
-
-    return decoded;
+    return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] }) as JwtPayload;
   } catch {
     return null;
   }
@@ -47,7 +34,7 @@ export function setAuthCookie(res: NextResponse, token: string): void {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+    maxAge: 7 * 24 * 60 * 60,
     path: '/',
   });
 }

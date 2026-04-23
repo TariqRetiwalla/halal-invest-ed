@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { signToken, setAuthCookie } from '@/lib/auth';
 
@@ -35,7 +36,6 @@ async function generateUniqueClassCode(): Promise<string> {
 }
 
 function deriveUsername(name: string): string {
-  // Lowercase, replace spaces with underscores, remove non-alphanumeric chars
   return name
     .toLowerCase()
     .replace(/\s+/g, '_')
@@ -57,7 +57,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { name, email, password, schoolName } = parsed.data;
 
-    // Check email uniqueness
     const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
@@ -67,65 +66,47 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
     }
 
-    // Derive a unique username from name
+    // Derive unique username
     let baseUsername = deriveUsername(name);
     if (!baseUsername || baseUsername.length < 3) {
       baseUsername = 'teacher';
     }
 
     let username = baseUsername;
-    let usernameAttempt = 0;
+    let attempt = 0;
     while (true) {
-      const existing = await prisma.user.findUnique({
-        where: { username },
-        select: { id: true },
-      });
+      const existing = await prisma.user.findUnique({ where: { username }, select: { id: true } });
       if (!existing) break;
-      usernameAttempt++;
-      username = `${baseUsername}${usernameAttempt}`;
+      attempt++;
+      username = `${baseUsername}${attempt}`;
     }
 
-    // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
-
-    // Generate unique class code
     const classCode = await generateUniqueClassCode();
 
-    // Create teacher user
-    const user = await prisma.user.create({
-      data: {
-        username,
-        email,
-        passwordHash,
-        role: 'TEACHER',
-      },
-      select: {
-        id: true,
-        username: true,
-        role: true,
-      },
+    // Create teacher + class + locks atomically
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: { username, email, passwordHash, role: 'TEACHER' },
+        select: { id: true, username: true, role: true },
+      });
+
+      const newClass = await tx.class.create({
+        data: { teacherId: newUser.id, classCode, name: schoolName },
+        select: { id: true },
+      });
+
+      await tx.classLessonLock.createMany({
+        data: [1, 2, 3, 4, 5].map((lessonNumber) => ({
+          classId: newClass.id,
+          lessonNumber,
+          isLocked: lessonNumber !== 1,
+        })),
+      });
+
+      return newUser;
     });
 
-    // Create class
-    const newClass = await prisma.class.create({
-      data: {
-        teacherId: user.id,
-        classCode,
-        name: schoolName,
-      },
-      select: { id: true },
-    });
-
-    // Initialise ClassLessonLock rows: lesson 1 unlocked, 2-5 locked
-    await prisma.classLessonLock.createMany({
-      data: [1, 2, 3, 4, 5].map((lessonNumber) => ({
-        classId: newClass.id,
-        lessonNumber,
-        isLocked: lessonNumber !== 1,
-      })),
-    });
-
-    // Issue JWT and set cookie
     const token = signToken({
       sub: user.id,
       username: user.username,
@@ -137,6 +118,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     setAuthCookie(res, token);
     return res;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return NextResponse.json({ error: 'Email already registered' }, { status: 409 });
+    }
     if (process.env.NODE_ENV === 'development') {
       console.error('[teacher-register]', error);
     }

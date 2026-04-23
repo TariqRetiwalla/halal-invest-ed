@@ -43,9 +43,11 @@ const loginSchema = z.object({
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
+    // Prefer x-real-ip (set by Railway's proxy, not spoofable by client).
+    // Fall back to rightmost x-forwarded-for entry (last trusted proxy).
     const ip =
-      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
       req.headers.get('x-real-ip') ??
+      req.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim() ??
       '127.0.0.1';
 
     // Check rate limit
@@ -110,6 +112,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       id: user.id,
       username: user.username,
       role: user.role,
+      ageRange: user.ageRange ?? null,
     };
 
     const res = NextResponse.json({ user: userPayload }, { status: 200 });
