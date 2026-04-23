@@ -1,49 +1,53 @@
-# Sprint 3 — Learn & Start a Club
+# Sprint 3 — Simulator
 
-**Goal:** Complete the informational content pages. The app now has a full v1 feature set: simulator, auth, educational content, and club resources.
+**Goal:** Full screening simulator playable, hard-gated on lesson completion, with lesson callback links in feedback.
 
 ---
 
 ## Scope
 
-### Frontend (frontend-engineer)
-- [ ] `/learn` page — Islamic finance principles, screening criteria explained
-  - Plain language, age 12+ appropriate
-  - Visual breakdown of the three screening criteria
-  - No jargon without explanation
-- [ ] `/start-a-club` page (per `docs/START-A-CLUB.md` content spec)
-  - Session format guide
-  - Printable halal ground rules (print-friendly layout, `window.print()` button)
-  - What students need section
-  - Email sign-up form
+### Simulator (simulator-engineer)
+- [ ] Company dataset: minimum 40 companies (mix of clearly halal, clearly haram, and edge cases — varied failure reasons), stored as seed data
+- [ ] GBM price engine (client-side JavaScript)
+- [ ] Screening decision engine (server-side — the halal verdict is never exposed to the client before the student answers)
+- [ ] `GET /api/simulator/companies` — returns company list without verdict or failure reasons
+- [ ] `POST /api/simulator/session` — creates a simulator session for the authenticated user
+- [ ] `POST /api/simulator/answer` — evaluates answer server-side, returns Type 1/Type 2 feedback or correct response. Includes lesson callback link in feedback (e.g., "This ties back to Lesson 4, Section 2 — want to review it?")
+- [ ] `GET /api/simulator/access` — returns whether the user has completed all 5 lessons (and, for club students, whether the teacher has unlocked the simulator)
+- [ ] Server-side invariant: haram company can never be marked passing — tested and enforced at the API layer
 
-### Backend (backend-engineer)
-- [ ] `POST /api/club-signups` endpoint
-  - Validation: email required, role required
-  - Returns 201 on success
-- [ ] Confirm club_signups table migration is applied
-
-### Content
-- [ ] Landing page — final copy and CTAs (not just scaffold)
-- [ ] Meta titles and descriptions for all pages (Next.js metadata API)
-- [ ] Disclaimer: "educational only, no real financial data, not certified Shariah advice" — visible on simulator and learn pages
+### Frontend (simulator-engineer + frontend-engineer)
+- [ ] `/play` page — shows locked state (progress bar: "X of 5 lessons complete — complete all 5 lessons to unlock") until gate passes
+- [ ] CompanyCard component — displays company name, what it does, main income source, interest income level (Low/Medium/High), debt level (Low/Medium/High)
+- [ ] AnswerButtons component — 3 yes/no screening questions + submit
+- [ ] FeedbackPanel component — handles 4 states:
+  - **Correct** — brief celebration + next company
+  - **Mistake Type 1** (passing haram): "Hold on — let's look at this again" → highlight missed data point → Islamic principle (1 sentence) → re-ask → if wrong again: show answer + block + suggest new company
+  - **Mistake Type 2** (blocking halal): "Good instinct — but this one passes. Here's why." → brief explanation → let reconsider
+  - **Blocked** — company blocked after second Type 1 failure; move to next company
+- [ ] Lesson callback link in feedback panel — links to the exact lesson section relevant to the mistake
+- [ ] Screening history: list of companies screened with pass/fail result
+- [ ] Session results saved to `simulator_sessions` table
+- [ ] Legal disclaimer banner on `/play`
+- [ ] Works on mobile (375px viewport)
 
 ---
 
-## Polish Tasks (if time allows)
+## Not In Sprint 3
 
-- [ ] 404 page
-- [ ] Loading states for API-dependent forms (register, login, club sign-up)
-- [ ] Success/error toast notifications for form submissions
-- [ ] `robots.txt` and `sitemap.xml`
+- Teacher simulator early-unlock (Sprint 4)
+- Class leaderboard (Sprint 4)
 
 ---
 
 ## Definition of Done
 
-- All 6 routes return correct pages with no console errors
-- Club sign-up form submits successfully and data appears in database
-- Printable ground rules print correctly (navbar/footer hidden in print view)
-- Learn page reviewed for reading level and accuracy
-- `npm run build` passes
-- Full app deployed to Railway and smoke-tested at the live URL
+- Student with all 5 lessons complete can access the simulator and screen companies
+- Student without all lessons complete sees the locked state with correct progress count
+- Both wrong-answer feedback types work correctly and display the lesson callback link
+- Student can click the lesson callback link and be taken to the exact lesson section
+- Haram company can never be passed regardless of what the student submits (verified manually and by API test)
+- Screening history shows past results
+- Session data persisted to the database
+- Works on mobile at 375px viewport
+- `npm run build` passes with no errors

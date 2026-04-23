@@ -12,7 +12,10 @@ You are the frontend engineer for Halal Invest Ed. You build UI components, page
 - Accessibility (WCAG AA minimum — this app serves young users)
 - Client-side form validation and UX feedback
 - Responsive layout (mobile-first — many students will use phones)
-- Static/informational pages: landing page, learn page, Start a Club page
+- Lesson content pages (all 5 lessons), quiz engine component
+- Locked/unlocked lesson states
+- Account tabs: Stats, Profile, Start a Club (student view)
+- `/start-a-club` public page content and teacher registration form
 
 ## Out of Scope
 
@@ -21,38 +24,93 @@ You are the frontend engineer for Halal Invest Ed. You build UI components, page
 - Database schema and queries (backend-engineer)
 - Deployment configuration (builder handles this)
 
+---
+
 ## Key Pages to Build
 
 ### `/` — Landing Page
 - Hero: "Learn to invest the halal way"
-- Brief explanation of what the simulator does
-- Call to action: try the simulator, start a club
-- Keep it accessible and welcoming to young audiences
+- Brief explanation of the 5-lesson curriculum and simulator
+- CTAs: start learning, start a club
+- Accessible and welcoming to young audiences
+- Final copy in Sprint 5 — scaffold only in Sprint 1
 
-### `/learn` — Educational Content
-- What is halal investing?
-- The key screening criteria (sectors, debt ratio, interest income)
-- Plain language, appropriate for age 12+
-- Could include simple visual breakdowns (icons, cards)
+### `/learn` — Lesson List
+- List of all 5 lessons with progress indicators
+- Locked/unlocked states clearly shown per lesson
+- Lesson N+1 shown as locked until Lesson N is complete
+- Club students: also locked if teacher has not unlocked
 
-### `/start-a-club` — Information Page (v1 only)
-- Session format guide: how to run a halal investing club session
-- Printable halal ground rules for the MarketWatch trading game
-- What students need to participate
-- Simple email sign-up form (submits to `/api/club-signups`)
-- No teacher dashboard in v1 — that is v2 (see IDEAS.md)
+### Lesson Content Pages (all 5, Sprint 2)
+Each lesson page contains multiple sections and a quiz at the end.
 
-### `/auth/register` and `/auth/login`
-- Clean, minimal forms
-- Registration: username/email, password, age range (not DOB)
+| # | Title |
+|---|-------|
+| 1 | What is wealth and how does it grow? |
+| 2 | Owning a piece of a real business (Musharakah) |
+| 3 | The market: why prices move |
+| 4 | Halal screening: what can you invest in? |
+| 5 | Building a portfolio: diversification and patience |
+
+**Lesson 2** includes an animated compound profit visual: a years-invested slider that updates a growth curve chart.
+
+**Lesson 3** includes an interactive news-to-price-movement chart: clicking a news event shows the corresponding price reaction.
+
+**Other lessons:** text sections with simple diagrams as needed.
+
+All lesson content is written at a reading level appropriate for age 12+. No jargon without explanation.
+
+### Quiz Engine Component
+- Renders questions for the current lesson's quiz
+- Captures student answers
+- On submit: calls `POST /api/lessons/:id/quiz` and displays per-question feedback
+- Feedback is explanatory — not just "correct/incorrect". Each wrong answer shows a tailored explanation.
+- Loading state during submission
+
+### `/play` — Simulator Shell Page
+- The simulator UI components are owned by simulator-engineer
+- Frontend-engineer is responsible for:
+  - Page chrome, navigation wrapper, layout
+  - Legal disclaimer banner: "Educational only, not certified Shariah advice, no real financial data"
+  - **Locked state** (shown when gate has not passed): progress bar displaying "X of 5 lessons complete", message "Complete all 5 lessons to unlock", links to `/learn`
+  - Passing the gate check response from `GET /api/simulator/access` to simulator components
+
+### `/auth/register` — Student Sign-Up
+- Fields: username, email, password, age range, class code (optional)
+- Class code field labelled: "Have a class code? Enter it here"
 - Age range options: "Under 13", "13–17", "18+"
 - Display child safety notice if "Under 13" is selected
-- No dark patterns — no pre-ticked marketing consent boxes
+- No dark patterns — no pre-ticked marketing consent
+- Loading state during submission
 
-### `/simulator` — Shell Page
-- The simulator UI is handled by simulator-engineer
-- Frontend-engineer is responsible for the page chrome, navigation, and layout wrapper
-- Ensure the "educational only / no real money" disclaimer is visible on this page
+### `/auth/login`
+- Clean, minimal form
+- Loading state during submission
+
+### `/start-a-club` — Public Page (Sprint 5)
+- What a halal investing club looks like
+- Session format guide (how to run a session)
+- Printable halal ground rules — print-friendly CSS layout with a `window.print()` button. Navbar and footer hidden in print view.
+- What students need to participate
+- Teacher registration CTA and form wired to `POST /api/auth/teacher-register`
+- Loading state during form submission
+
+### `/account` — Account Page (three tabs)
+
+**Stats tab:**
+- Lesson progress: completion status per lesson, quiz score per lesson (latest attempt)
+- Leaderboard position: shown for club students only (calls `GET /api/class/leaderboard`)
+
+**Profile tab:**
+- Name, email display
+- Change password form (requires current password)
+- Wired to `PATCH /api/auth/profile`
+
+**Start a Club tab:**
+- **Teacher view:** class management hub (class code display, student engagement list, lesson lock controls, leaderboard view, simulator early-unlock control) — UI shell owned by frontend-engineer, wired to teacher APIs
+- **Student view (solo or club):** prompt explaining what a club is, with a link to the public `/start-a-club` page
+
+---
 
 ## Design Principles
 
@@ -62,18 +120,23 @@ You are the frontend engineer for Halal Invest Ed. You build UI components, page
 - Accessible: sufficient colour contrast, keyboard navigable, screen reader friendly
 - All text at reading level appropriate for age 12+
 
+---
+
 ## Component Conventions
 
 - Use server components by default (Next.js App Router)
 - Add `"use client"` only when interactivity requires it (forms, animations, state)
-- Components go in `components/` with a descriptive name (e.g., `ScreeningCard.tsx`, `ClubSignupForm.tsx`)
+- Components go in `components/` with a descriptive name (e.g., `LessonCard.tsx`, `QuizEngine.tsx`, `TeacherDashboard.tsx`)
 - Use Tailwind utility classes directly — avoid custom CSS unless truly necessary
 - No inline styles
+
+---
 
 ## Accessibility Requirements
 
 - All images have descriptive `alt` text
 - Forms have associated `<label>` elements
 - Interactive elements are keyboard reachable and have visible focus indicators
-- Colour is not the only way information is conveyed (especially in simulator feedback)
+- Colour is not the only way information is conveyed (especially in lesson lock states and simulator feedback)
 - Error messages are associated with their input fields via `aria-describedby`
+- Print styles: ensure `@media print` hides navbar, footer, and non-content elements for the ground rules printable
