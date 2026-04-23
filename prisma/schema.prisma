@@ -1,0 +1,128 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum AgeRange {
+  UNDER_13
+  AGE_13_17
+  AGE_18_PLUS
+}
+
+enum ClubRole {
+  TEACHER
+  PARENT
+  OTHER
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  email        String?   @unique
+  passwordHash String
+  role         Role      @default(STUDENT)
+  ageRange     AgeRange?
+  createdAt    DateTime  @default(now())
+
+  taughtClass       Class?             @relation("TeacherClass")
+  classMembership   ClassMembership?
+  lessonProgress    LessonProgress[]
+  quizAttempts      QuizAttempt[]
+  simulatorSessions SimulatorSession[]
+
+  @@map("users")
+}
+
+model Class {
+  id                String   @id @default(cuid())
+  teacherId         String   @unique
+  teacher           User     @relation("TeacherClass", fields: [teacherId], references: [id])
+  classCode         String   @unique
+  name              String
+  simulatorUnlocked Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  memberships ClassMembership[]
+  lessonLocks ClassLessonLock[]
+
+  @@map("classes")
+}
+
+model ClassMembership {
+  id        String   @id @default(cuid())
+  classId   String
+  class     Class    @relation(fields: [classId], references: [id])
+  studentId String   @unique
+  student   User     @relation(fields: [studentId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@map("class_memberships")
+}
+
+model ClassLessonLock {
+  id           String   @id @default(cuid())
+  classId      String
+  class        Class    @relation(fields: [classId], references: [id])
+  lessonNumber Int
+  isLocked     Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+
+  @@unique([classId, lessonNumber])
+  @@map("class_lesson_locks")
+}
+
+model LessonProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  lessonNumber Int
+  completedAt  DateTime @default(now())
+
+  @@unique([userId, lessonNumber])
+  @@map("lesson_progress")
+}
+
+model QuizAttempt {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  lessonNumber Int
+  score        Int
+  attemptedAt  DateTime @default(now())
+
+  @@map("quiz_attempts")
+}
+
+model SimulatorSession {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  companyId       String
+  studentDecision String
+  correct         Boolean
+  mistakeType     Int?
+  attemptNumber   Int
+  profitPct       Float?
+  createdAt       DateTime @default(now())
+
+  @@map("simulator_sessions")
+}
+
+model ClubSignup {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  role      ClubRole
+  createdAt DateTime @default(now())
+
+  @@map("club_signups")
+}
