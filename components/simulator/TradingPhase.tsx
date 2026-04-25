@@ -19,20 +19,21 @@ interface Holding {
 interface TradingPhaseProps {
   watchlist: WatchlistCompany[];
   startingCash: number;
+  sessionId: string;
   onComplete: (finalCash: number) => void;
 }
 
 const TOTAL_DAYS = 30;
 
-export default function TradingPhase({ watchlist, startingCash, onComplete }: TradingPhaseProps) {
+export default function TradingPhase({ watchlist, startingCash, sessionId, onComplete }: TradingPhaseProps) {
   const [day, setDay] = useState(0);
   const [cash, setCash] = useState(startingCash);
   const [holdings, setHoldings] = useState<Holding[]>([]);
 
   // Generate full 30-day price history for each company once on mount
   const priceHistories = useMemo(() => {
-    return Object.fromEntries(watchlist.map((c) => [c.id, generatePriceHistory(c.id, TOTAL_DAYS)]));
-  }, [watchlist]);
+    return Object.fromEntries(watchlist.map((c) => [c.id, generatePriceHistory(c.id + sessionId, TOTAL_DAYS)]));
+  }, [watchlist, sessionId]);
 
   function currentPrice(companyId: string): number {
     return Math.round((priceHistories[companyId]?.[day] ?? 100) * 100) / 100;

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import CompanyCard from '@/components/simulator/CompanyCard';
 import AnswerButtons from '@/components/simulator/AnswerButtons';
@@ -193,13 +193,16 @@ function DoneState({
 
         <div className="w-full grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-[#1d3268] border border-[#2d4f8a] p-4">
-            <p className="text-xs text-[#4a6a9a] mb-1">Cash from screening</p>
+            <p className="text-xs text-[#4a6a9a] mb-1">Entered trading with</p>
             <p className="text-xl font-bold text-[#c9a84c]">${screeningCash.toLocaleString()}</p>
           </div>
           <div className="rounded-xl bg-[#1d3268] border border-[#2d4f8a] p-4">
-            <p className="text-xs text-[#4a6a9a] mb-1">Final portfolio value</p>
-            <p className={`text-xl font-bold ${finalTradingCash >= screeningCash ? 'text-[#4aad70]' : 'text-[#f08080]'}`}>
+            <p className="text-xs text-[#4a6a9a] mb-1">Finished with</p>
+            <p className={`text-base font-bold ${finalTradingCash >= screeningCash ? 'text-[#4aad70]' : 'text-[#f08080]'}`}>
               ${finalTradingCash.toLocaleString()}
+            </p>
+            <p className={`text-xs font-medium mt-0.5 ${finalTradingCash >= screeningCash ? 'text-[#4aad70]' : 'text-[#f08080]'}`}>
+              {finalTradingCash >= screeningCash ? '+' : ''}{(finalTradingCash - screeningCash).toLocaleString()} from trading
             </p>
           </div>
           <div className="rounded-xl bg-[#1d3268] border border-[#2d4f8a] p-4 col-span-2">
@@ -231,8 +234,10 @@ function DoneState({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 
-export default function PlayPage() {
+function PlayPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const devMode = searchParams.get('dev') === 'true';
 
   // Access gate state
   const [accessLoading, setAccessLoading] = useState(true);
@@ -270,7 +275,7 @@ export default function PlayPage() {
 
         setLessonsComplete(data.lessonsComplete);
 
-        if (data.accessible) {
+        if (data.accessible || devMode) {
           setAccessible(true);
         }
       } catch {
@@ -282,7 +287,7 @@ export default function PlayPage() {
 
     checkAccess();
     return () => { cancelled = true; };
-  }, [router]);
+  }, [router, devMode]);
 
   // ── Step 2: init simulator when accessible ─────────────────────────────────
   useEffect(() => {
@@ -292,6 +297,23 @@ export default function PlayPage() {
 
     async function initSimulator() {
       try {
+        if (devMode) {
+          const companiesRes = await fetch('/api/simulator/companies', { credentials: 'include' });
+          if (companiesRes.status === 401) {
+            router.replace('/auth/login?redirect=/play');
+            return;
+          }
+          const { companies: raw } = await companiesRes.json();
+          if (cancelled) return;
+
+          setSessionId('dev-session');
+          setCompanies(shuffle(raw));
+          setCashBalance(1000);
+          setWatchlist(raw.map((c: PublicCompany) => ({ id: c.id, name: c.name, industry: c.industry })));
+          setPhase('trading');
+          return;
+        }
+
         const [sessionRes, companiesRes] = await Promise.all([
           fetch('/api/simulator/session', { method: 'POST', credentials: 'include' }),
           fetch('/api/simulator/companies', { credentials: 'include' }),
@@ -308,8 +330,8 @@ export default function PlayPage() {
         if (cancelled) return;
 
         setSessionId(sid);
-        setCashBalance(startingCash ?? 500);
         setCompanies(shuffle(raw));
+        setCashBalance(startingCash ?? 500);
         setPhase('waiting');
       } catch {
         // stay in loading_companies — surface a generic error in future
@@ -318,7 +340,7 @@ export default function PlayPage() {
 
     initSimulator();
     return () => { cancelled = true; };
-  }, [accessible, sessionKey, router]);
+  }, [accessible, sessionKey, router, devMode]);
 
   // ── Handle answer submission ───────────────────────────────────────────────
   async function handleAnswer(answers: boolean[]) {
@@ -337,6 +359,7 @@ export default function PlayPage() {
           companyId: currentCompany.id,
           studentAnswers: answers,
           attemptNumber,
+          currentCash: cashBalance,
         }),
       });
 
@@ -443,25 +466,44 @@ export default function PlayPage() {
 
   if (phase === 'trading') {
     return (
-      <TradingPhase
-        watchlist={watchlist}
-        startingCash={cashBalance}
-        onComplete={(finalCash) => {
-          setFinalTradingCash(finalCash);
-          setPhase('done');
-        }}
-      />
+      <div>
+        {devMode && (
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4">
+            <div className="bg-[#1a0a2e] border border-[#7b3fbe] rounded-xl px-4 py-2 text-xs text-[#c084fc] font-mono">
+              DEV MODE — $1,000 starting cash · all companies pre-loaded
+            </div>
+          </div>
+        )}
+        <TradingPhase
+          watchlist={watchlist}
+          startingCash={cashBalance}
+          sessionId={sessionId}
+          onComplete={(finalCash) => {
+            setFinalTradingCash(finalCash);
+            setPhase('done');
+          }}
+        />
+      </div>
     );
   }
 
   if (phase === 'done') {
     return (
-      <DoneState
-        screeningCash={cashBalance}
-        finalTradingCash={finalTradingCash}
-        history={history}
-        onRestart={handleRestart}
-      />
+      <div>
+        {devMode && (
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-4">
+            <div className="bg-[#1a0a2e] border border-[#7b3fbe] rounded-xl px-4 py-2 text-xs text-[#c084fc] font-mono">
+              DEV MODE
+            </div>
+          </div>
+        )}
+        <DoneState
+          screeningCash={cashBalance}
+          finalTradingCash={finalTradingCash}
+          history={history}
+          onRestart={handleRestart}
+        />
+      </div>
     );
   }
 
@@ -525,5 +567,13 @@ export default function PlayPage() {
       {/* Screening history */}
       <ScreeningHistory history={history} />
     </div>
+  );
+}
+
+export default function PlayPageRoot() {
+  return (
+    <Suspense fallback={<SkeletonLoader />}>
+      <PlayPage />
+    </Suspense>
   );
 }

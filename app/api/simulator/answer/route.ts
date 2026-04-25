@@ -28,11 +28,12 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 });
     }
 
-    const { sessionId, companyId, studentAnswers, attemptNumber } = body as {
+    const { sessionId, companyId, studentAnswers, attemptNumber, currentCash: rawCurrentCash } = body as {
       sessionId: string;
       companyId: string;
       studentAnswers: unknown[];
       attemptNumber: number;
+      currentCash?: unknown;
     };
 
     if (studentAnswers.length !== 3 || studentAnswers.some((v) => typeof v !== 'boolean')) {
@@ -85,13 +86,11 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       blocked = true;
     }
 
-    // Calculate cashBalance
-    const lastSession = await prisma.simulatorSession.findFirst({
-      where: { userId: user.sub },
-      orderBy: { createdAt: 'desc' },
-      select: { cashBalance: true },
-    });
-    const currentCash = lastSession?.cashBalance ?? 500;
+    // Use client-provided cash as the authoritative current balance.
+    // Fall back to 500 if missing/invalid (e.g. first-ever session).
+    const currentCash = typeof rawCurrentCash === 'number' && rawCurrentCash >= 0
+      ? rawCurrentCash
+      : 500;
 
     let cashDelta = 0;
     if (isCorrect) {
