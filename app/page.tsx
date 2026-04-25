@@ -1,4 +1,11 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Halal Invest Ed — Learn to invest the halal way',
+  description:
+    'A free Islamic finance curriculum for young people aged 12 and up. Five lessons, interactive quizzes, and a halal stock screening simulator.',
+};
 
 const FEATURES = [
   {

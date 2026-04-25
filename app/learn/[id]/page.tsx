@@ -505,6 +505,11 @@ export default function LessonPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-[#e8eeff] leading-snug">{title}</h1>
       </div>
 
+      {/* Disclaimer */}
+      <div className="mb-6 bg-[#2a2010] border border-[#c9a84c] rounded-xl px-4 py-2.5 text-xs text-[#f0d98a]">
+        Educational content only. Not certified Shariah advice. Always consult a qualified scholar for personal financial decisions.
+      </div>
+
       {/* Lesson content */}
       <div className="lesson-prose bg-[#162550] border border-[#2d4f8a] rounded-2xl p-6 mb-12">
         <LessonContent />

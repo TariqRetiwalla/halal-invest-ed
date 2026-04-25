@@ -149,6 +149,14 @@ export default function AccountPage() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
 
+  // Change password state (profile tab)
+  const [cpCurrent, setCpCurrent] = useState('');
+  const [cpNew, setCpNew] = useState('');
+  const [cpConfirm, setCpConfirm] = useState('');
+  const [cpLoading, setCpLoading] = useState(false);
+  const [cpError, setCpError] = useState<string | null>(null);
+  const [cpSuccess, setCpSuccess] = useState(false);
+
   // Club tab state (teacher)
   const [classData, setClassData] = useState<ClassData | null>(null);
   const [clubLoading, setClubLoading] = useState(false);
@@ -235,6 +243,43 @@ export default function AccountPage() {
       fetchClubLeaderboard();
     }
   }, [activeTab, user, clubLoaded, fetchClassData, fetchClubLeaderboard]);
+
+  // ── Change password ─────────────────────────────────────────────────────────
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setCpError(null);
+    setCpSuccess(false);
+    if (cpNew.length < 8) {
+      setCpError('New password must be at least 8 characters.');
+      return;
+    }
+    if (cpNew !== cpConfirm) {
+      setCpError('New passwords do not match.');
+      return;
+    }
+    setCpLoading(true);
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword: cpCurrent, newPassword: cpNew }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCpError(data.error ?? 'Something went wrong. Please try again.');
+      } else {
+        setCpSuccess(true);
+        setCpCurrent('');
+        setCpNew('');
+        setCpConfirm('');
+      }
+    } catch {
+      setCpError('Network error. Please check your connection and try again.');
+    } finally {
+      setCpLoading(false);
+    }
+  }
 
   // ── Copy class code to clipboard ───────────────────────────────────────────
   function handleCopy(code: string) {
@@ -515,9 +560,71 @@ export default function AccountPage() {
               </div>
             )}
           </div>
-          <p className="mt-4 text-xs text-[#4a6a9a]">
-            Profile editing (change password, etc.) coming in Sprint 4.
-          </p>
+          {/* Change password form */}
+          <form onSubmit={handleChangePassword} noValidate className="mt-6 space-y-4">
+            <h3 className="text-sm font-semibold text-[#e8eeff]">Change password</h3>
+
+            {cpSuccess && (
+              <div className="rounded-lg bg-[#0a2010] border border-[#2a7a4b] px-4 py-3 text-sm text-[#4aad70]">
+                Password updated successfully.
+              </div>
+            )}
+            {cpError && (
+              <div role="alert" className="rounded-lg bg-[#2a0808] border border-[#8b2a2a] px-4 py-3 text-sm text-[#f08080]">
+                {cpError}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="cp-current" className="block text-xs font-medium text-[#8aabcc] mb-1">
+                Current password
+              </label>
+              <input
+                id="cp-current"
+                type="password"
+                autoComplete="current-password"
+                value={cpCurrent}
+                onChange={(e) => setCpCurrent(e.target.value)}
+                className="w-full rounded-lg border border-[#2d4f8a] bg-[#0f1f3d] px-4 py-2.5 text-sm text-[#e8eeff] placeholder-[#4a6a9a] focus:outline-none focus:ring-2 focus:ring-[#c9a84c] focus:border-[#c9a84c] transition"
+                placeholder="Your current password"
+              />
+            </div>
+            <div>
+              <label htmlFor="cp-new" className="block text-xs font-medium text-[#8aabcc] mb-1">
+                New password
+              </label>
+              <input
+                id="cp-new"
+                type="password"
+                autoComplete="new-password"
+                value={cpNew}
+                onChange={(e) => setCpNew(e.target.value)}
+                className="w-full rounded-lg border border-[#2d4f8a] bg-[#0f1f3d] px-4 py-2.5 text-sm text-[#e8eeff] placeholder-[#4a6a9a] focus:outline-none focus:ring-2 focus:ring-[#c9a84c] focus:border-[#c9a84c] transition"
+                placeholder="At least 8 characters"
+              />
+            </div>
+            <div>
+              <label htmlFor="cp-confirm" className="block text-xs font-medium text-[#8aabcc] mb-1">
+                Confirm new password
+              </label>
+              <input
+                id="cp-confirm"
+                type="password"
+                autoComplete="new-password"
+                value={cpConfirm}
+                onChange={(e) => setCpConfirm(e.target.value)}
+                className="w-full rounded-lg border border-[#2d4f8a] bg-[#0f1f3d] px-4 py-2.5 text-sm text-[#e8eeff] placeholder-[#4a6a9a] focus:outline-none focus:ring-2 focus:ring-[#c9a84c] focus:border-[#c9a84c] transition"
+                placeholder="Repeat new password"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={cpLoading}
+              className="rounded-xl bg-[#c9a84c] px-5 py-2.5 text-sm font-semibold text-[#0f1f3d] hover:bg-[#b5923a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {cpLoading ? 'Saving…' : 'Update password'}
+            </button>
+          </form>
         </div>
 
         {/* ── Start a Club tab ──────────────────────────────────────────────── */}
