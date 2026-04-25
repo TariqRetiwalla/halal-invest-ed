@@ -20,8 +20,8 @@ interface TradingPhaseProps {
 interface CompanyMarket {
   initialPrice: number;
   prices: number[];
-  drift: number;      // per-tick trend bias, e.g. +0.02 = +2% per tick
-  driftTicks: number; // ticks remaining before drift randomises
+  drift: number;
+  driftTicks: number;
 }
 
 interface Holding {
@@ -42,8 +42,8 @@ interface NewsItem {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TICK_MS = 60_000; // 1 real minute
-const MAX_HISTORY = 60; // ticks kept in chart
+const TICK_MS = 60_000;
+const MAX_HISTORY = 60;
 
 const POSITIVE_HEADLINES = [
   'reports record quarterly revenue',
@@ -74,12 +74,12 @@ const NEGATIVE_HEADLINES = [
 const COMPANY_COLORS = [
   '#4aad70',
   '#f0d98a',
-  '#8aabcc',
+  '#60a5fa',
   '#f08080',
   '#c084fc',
   '#fb923c',
   '#34d399',
-  '#60a5fa',
+  '#8aabcc',
   '#f472b6',
   '#a78bfa',
   '#fbbf24',
@@ -110,30 +110,30 @@ function PriceChart({
   companies: WatchlistCompany[];
 }) {
   const VW = 1200;
-  const VH = 340;
-  const PL = 62;
-  const PR = 12;
-  const PT = 14;
-  const PB = 28;
+  const VH = 360;
+  const PL = 60;
+  const PR = 16;
+  const PT = 16;
+  const PB = 20;
   const cW = VW - PL - PR;
   const cH = VH - PT - PB;
 
-  // % change from initial price for each company
   const series = companies.map((c, idx) => {
     const m = market[c.id];
     if (!m || m.prices.length === 0) return null;
     const pcts = m.prices.map((p) => ((p - m.initialPrice) / m.initialPrice) * 100);
+    const cur = pcts[pcts.length - 1] ?? 0;
     return {
       id: c.id,
       name: c.name,
       color: COMPANY_COLORS[idx % COMPANY_COLORS.length],
       pcts,
+      cur,
     };
-  }).filter(Boolean) as { id: string; name: string; color: string; pcts: number[] }[];
+  }).filter(Boolean) as { id: string; name: string; color: string; pcts: number[]; cur: number }[];
 
   const maxLen = Math.max(...series.map((s) => s.pcts.length), 1);
 
-  // Auto-scale Y with a minimum of ±5%
   let minP = -5;
   let maxP = 5;
   for (const s of series) {
@@ -143,8 +143,8 @@ function PriceChart({
     }
   }
   const span = maxP - minP;
-  minP -= span * 0.08;
-  maxP += span * 0.08;
+  minP -= span * 0.1;
+  maxP += span * 0.1;
   const totalSpan = maxP - minP;
 
   function toX(i: number): number {
@@ -154,9 +154,8 @@ function PriceChart({
     return PT + ((maxP - pct) / totalSpan) * cH;
   }
 
-  const zeroY = toY(0);
+  const zeroY = Math.min(PT + cH, Math.max(PT, toY(0)));
 
-  // Y-axis grid labels
   const labelStep = Math.max(1, Math.ceil(totalSpan / 6));
   const yLabels: { y: number; label: string }[] = [];
   const start = Math.ceil(minP / labelStep) * labelStep;
@@ -165,53 +164,65 @@ function PriceChart({
   }
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-4">
       <svg
         viewBox={`0 0 ${VW} ${VH}`}
         width="100%"
-        height="340"
         preserveAspectRatio="none"
-        style={{ display: 'block' }}
+        style={{ display: 'block', height: '340px' }}
         aria-label="Live price chart"
       >
-        {/* Grid lines */}
+        {/* Chart background */}
+        <rect x={PL} y={PT} width={cW} height={cH} fill="#0a1628" />
+
+        {/* Positive zone (above zero) — very subtle green tint */}
+        {zeroY > PT && (
+          <rect x={PL} y={PT} width={cW} height={zeroY - PT} fill="rgba(74,173,112,0.05)" />
+        )}
+        {/* Negative zone (below zero) — very subtle red tint */}
+        {zeroY < PT + cH && (
+          <rect x={PL} y={zeroY} width={cW} height={PT + cH - zeroY} fill="rgba(240,128,128,0.05)" />
+        )}
+
+        {/* Dashed horizontal grid lines */}
         {yLabels.map(({ y, label }) => (
           <g key={label}>
             <line
               x1={PL} y1={y} x2={VW - PR} y2={y}
-              stroke="#1d3268" strokeWidth="1"
+              stroke="#1a2f5a" strokeWidth="1" strokeDasharray="6 5"
             />
             <text
-              x={PL - 6} y={y}
+              x={PL - 8} y={y}
               textAnchor="end" dominantBaseline="middle"
-              fill="#4a6a9a" fontSize="13"
+              fill="#3d5a8a" fontSize="13" fontFamily="monospace"
             >
               {label}
             </text>
           </g>
         ))}
 
-        {/* Zero baseline */}
-        {zeroY >= PT && zeroY <= PT + cH && (
-          <line
-            x1={PL} y1={zeroY} x2={VW - PR} y2={zeroY}
-            stroke="#2d4f8a" strokeWidth="1.5"
-          />
-        )}
+        {/* Zero baseline — more prominent */}
+        <line
+          x1={PL} y1={zeroY} x2={VW - PR} y2={zeroY}
+          stroke="#2d5080" strokeWidth="2"
+        />
 
         {/* Chart border */}
         <rect
           x={PL} y={PT} width={cW} height={cH}
-          fill="none" stroke="#2d4f8a" strokeWidth="1"
+          fill="none" stroke="#1d3268" strokeWidth="1"
         />
 
         {/* Company lines */}
-        {series.map(({ id, name, color, pcts }) => {
+        {series.map(({ id, color, pcts }) => {
           if (pcts.length < 2) {
-            // Single point — render dot
-            const cx = toX(0);
-            const cy = toY(pcts[0] ?? 0);
-            return <circle key={id} cx={cx} cy={cy} r="3" fill={color} />;
+            return (
+              <circle
+                key={id}
+                cx={toX(0)} cy={toY(pcts[0] ?? 0)}
+                r="4" fill={color} opacity="0.9"
+              />
+            );
           }
           const pts = pcts
             .map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`)
@@ -225,27 +236,33 @@ function PriceChart({
               strokeWidth="2.5"
               strokeLinejoin="round"
               strokeLinecap="round"
+              opacity="0.95"
             />
           );
         })}
-
-        {/* X-axis label */}
-        <text
-          x={VW / 2} y={VH - 4}
-          textAnchor="middle" fill="#4a6a9a" fontSize="12"
-        >
-          {maxLen === 1 ? 'Waiting for first tick…' : `${maxLen} ticks · 1 tick = 1 minute`}
-        </text>
       </svg>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-x-5 gap-y-2 px-1">
-        {series.map(({ id, name, color }) => (
-          <div key={id} className="flex items-center gap-1.5 min-w-0">
-            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-            <span className="text-xs text-[#8aabcc] truncate max-w-[140px]">{name}</span>
-          </div>
-        ))}
+      {/* Legend — name + current % change */}
+      <div className="flex flex-wrap gap-x-5 gap-y-2.5 px-1">
+        {series.map(({ id, name, color, cur }) => {
+          const isUp = cur >= 0;
+          return (
+            <div key={id} className="flex items-center gap-2 min-w-0">
+              <div
+                className="w-5 h-[2.5px] flex-shrink-0 rounded-full"
+                style={{ backgroundColor: color }}
+              />
+              <span className="text-xs text-[#8aabcc] truncate max-w-[120px]">{name}</span>
+              <span
+                className={`text-xs font-mono font-semibold flex-shrink-0 ${
+                  isUp ? 'text-[#4aad70]' : 'text-[#f08080]'
+                }`}
+              >
+                {isUp ? '+' : ''}{cur.toFixed(2)}%
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -265,12 +282,10 @@ export default function TradingPhase({
   const [cash, setCash] = useState(startingCash);
   const [tick, setTick] = useState(0);
 
-  // Refs for use inside setInterval (avoid stale closures)
   const marketRef = useRef<Record<string, CompanyMarket>>({});
   const tickRef = useRef(0);
   const nextNewsInRef = useRef(4);
 
-  // Keep marketRef in sync with state
   useEffect(() => {
     marketRef.current = market;
   }, [market]);
@@ -280,21 +295,21 @@ export default function TradingPhase({
     const initial: Record<string, CompanyMarket> = {};
     for (const c of watchlist) {
       const ph = djb2(c.id + sessionId);
-      const price = 50 + (ph % 100); // $50–$149 seeded initial price
+      const price = 50 + (ph % 100);
       const dh = djb2(sessionId + c.id + 'drift');
-      const drift = ((dh % 2000) / 2000 - 0.5) * 0.04; // –2% to +2% initial drift
-      const dticks = 7 + (djb2(c.id + 'dticks') % 8); // 7–14 ticks initial duration
+      const drift = ((dh % 2000) / 2000 - 0.5) * 0.04;
+      const dticks = 7 + (djb2(c.id + 'dticks') % 8);
       initial[c.id] = { initialPrice: price, prices: [price], drift, driftTicks: dticks };
     }
     setMarket(initial);
     marketRef.current = initial;
   }, [watchlist, sessionId]);
 
-  // ── Tick interval ──────────────────────────────────────────────────────────
+  // ── Tick interval — fires immediately then every TICK_MS ──────────────────
   useEffect(() => {
     if (watchlist.length === 0) return;
 
-    const id = setInterval(() => {
+    function doTick() {
       tickRef.current += 1;
       nextNewsInRef.current -= 1;
       const fireNews = nextNewsInRef.current <= 0;
@@ -303,7 +318,6 @@ export default function TradingPhase({
       const ids = Object.keys(current);
       if (ids.length === 0) return;
 
-      // Determine news event before updating state (refs are current)
       let newsItem: NewsItem | null = null;
       let newsTargetId: string | null = null;
       let newsSentiment: 'positive' | 'negative' = 'positive';
@@ -312,13 +326,12 @@ export default function TradingPhase({
       let newsDriftTicks = 0;
 
       if (fireNews) {
-        nextNewsInRef.current = Math.floor(Math.random() * 5) + 3; // next news in 3–7 ticks
+        nextNewsInRef.current = Math.floor(Math.random() * 5) + 3;
         newsTargetId = ids[Math.floor(Math.random() * ids.length)];
         newsSentiment = Math.random() > 0.45 ? 'positive' : 'negative';
-        newsImpact = 0.05 + Math.random() * 0.05; // 5–10% price shock
-        // News also sets a sustained drift in that direction for 5–9 ticks
+        newsImpact = 0.05 + Math.random() * 0.05;
         newsDrift = newsSentiment === 'positive'
-          ? 0.012 + Math.random() * 0.025  // +1.2% to +3.7% uptrend
+          ? 0.012 + Math.random() * 0.025
           : -(0.012 + Math.random() * 0.025);
         newsDriftTicks = Math.floor(Math.random() * 5) + 5;
 
@@ -335,15 +348,13 @@ export default function TradingPhase({
         };
       }
 
-      // Update all company prices
       setMarket((prev) => {
         const next: Record<string, CompanyMarket> = {};
         for (const [cid, data] of Object.entries(prev)) {
           const isTarget = cid === newsTargetId;
           const last = data.prices[data.prices.length - 1];
 
-          // Drift (trend) + small noise, plus news shock if this company is targeted
-          const noise = (Math.random() - 0.5) * 0.03; // ±1.5%
+          const noise = (Math.random() - 0.5) * 0.03;
           const shock = isTarget
             ? newsSentiment === 'positive' ? newsImpact : -newsImpact
             : 0;
@@ -353,12 +364,10 @@ export default function TradingPhase({
           let driftTicks = data.driftTicks - 1;
 
           if (isTarget) {
-            // News resets this company's trend for several ticks
             drift = newsDrift;
             driftTicks = newsDriftTicks;
           } else if (driftTicks <= 0) {
-            // Time to pick a new trend direction
-            drift = (Math.random() - 0.5) * 0.06; // –3% to +3%
+            drift = (Math.random() - 0.5) * 0.06;
             driftTicks = Math.floor(Math.random() * 8) + 7;
           }
 
@@ -374,10 +383,13 @@ export default function TradingPhase({
 
       setTick(tickRef.current);
       if (newsItem) setNews((n) => [newsItem!, ...n].slice(0, 20));
-    }, TICK_MS);
+    }
 
+    // Fire immediately so the chart shows data without waiting 60 seconds
+    doTick();
+    const id = setInterval(doTick, TICK_MS);
     return () => clearInterval(id);
-  }, [watchlist]); // watchlist is stable during trading
+  }, [watchlist]);
 
   // ── Derived values ─────────────────────────────────────────────────────────
   function currentPrice(companyId: string): number {
@@ -510,14 +522,17 @@ export default function TradingPhase({
               Live Market — % change from open
             </h2>
             <span className="text-xs text-[#4a6a9a] font-mono">
-              {tick === 0 ? 'Waiting for first tick…' : `Tick ${tick}`}
+              Tick {tick} · 1 tick = 1 min
             </span>
           </div>
           <PriceChart market={market} companies={watchlist} />
         </div>
 
         {/* News sidebar */}
-        <div className="bg-[#162550] border border-[#2d4f8a] rounded-2xl overflow-hidden flex flex-col" style={{ maxHeight: '520px' }}>
+        <div
+          className="bg-[#162550] border border-[#2d4f8a] rounded-2xl overflow-hidden flex flex-col"
+          style={{ maxHeight: '520px' }}
+        >
           <div className="px-4 py-3 border-b border-[#2d4f8a] flex-shrink-0">
             <h2 className="text-sm font-semibold text-[#e8eeff] uppercase tracking-wide">
               Market News
