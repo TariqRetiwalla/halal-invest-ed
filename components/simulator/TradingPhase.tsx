@@ -42,7 +42,8 @@ interface NewsItem {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const TICK_MS = 60_000;
+const TICK_MS = 30_000;
+const TICK_S = TICK_MS / 1000;
 const MAX_HISTORY = 60;
 
 const POSITIVE_HEADLINES = [
@@ -105,9 +106,13 @@ function fmt(n: number): string {
 function PriceChart({
   market,
   companies,
+  highlightedId,
+  onHighlight,
 }: {
   market: Record<string, CompanyMarket>;
   companies: WatchlistCompany[];
+  highlightedId: string | null;
+  onHighlight: (id: string | null) => void;
 }) {
   const VW = 1200;
   const VH = 360;
@@ -163,6 +168,8 @@ function PriceChart({
     yLabels.push({ y: toY(v), label: `${v > 0 ? '+' : ''}${v.toFixed(0)}%` });
   }
 
+  const hasHighlight = highlightedId !== null;
+
   return (
     <div className="w-full space-y-4">
       <svg
@@ -175,16 +182,15 @@ function PriceChart({
         {/* Chart background */}
         <rect x={PL} y={PT} width={cW} height={cH} fill="#0a1628" />
 
-        {/* Positive zone (above zero) — very subtle green tint */}
+        {/* Zone tints */}
         {zeroY > PT && (
           <rect x={PL} y={PT} width={cW} height={zeroY - PT} fill="rgba(74,173,112,0.05)" />
         )}
-        {/* Negative zone (below zero) — very subtle red tint */}
         {zeroY < PT + cH && (
           <rect x={PL} y={zeroY} width={cW} height={PT + cH - zeroY} fill="rgba(240,128,128,0.05)" />
         )}
 
-        {/* Dashed horizontal grid lines */}
+        {/* Dashed grid lines */}
         {yLabels.map(({ y, label }) => (
           <g key={label}>
             <line
@@ -201,7 +207,7 @@ function PriceChart({
           </g>
         ))}
 
-        {/* Zero baseline — more prominent */}
+        {/* Zero baseline */}
         <line
           x1={PL} y1={zeroY} x2={VW - PR} y2={zeroY}
           stroke="#2d5080" strokeWidth="2"
@@ -213,41 +219,95 @@ function PriceChart({
           fill="none" stroke="#1d3268" strokeWidth="1"
         />
 
-        {/* Company lines */}
-        {series.map(({ id, color, pcts }) => {
-          if (pcts.length < 2) {
+        {/* Dimmed lines first, highlighted on top */}
+        {series
+          .filter(({ id }) => !hasHighlight || id !== highlightedId)
+          .map(({ id, color, pcts }) => {
+            const dimmed = hasHighlight;
+            if (pcts.length < 2) {
+              return (
+                <circle
+                  key={id}
+                  cx={toX(0)} cy={toY(pcts[0] ?? 0)}
+                  r="3" fill={color} opacity={dimmed ? 0.12 : 0.9}
+                />
+              );
+            }
+            const pts = pcts
+              .map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`)
+              .join(' ');
+            return (
+              <polyline
+                key={id}
+                points={pts}
+                fill="none"
+                stroke={color}
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                opacity={dimmed ? 0.12 : 0.9}
+              />
+            );
+          })}
+
+        {/* Highlighted line on top */}
+        {hasHighlight && (() => {
+          const s = series.find((s) => s.id === highlightedId);
+          if (!s) return null;
+          if (s.pcts.length < 2) {
             return (
               <circle
-                key={id}
-                cx={toX(0)} cy={toY(pcts[0] ?? 0)}
-                r="4" fill={color} opacity="0.9"
+                cx={toX(0)} cy={toY(s.pcts[0] ?? 0)}
+                r="5" fill={s.color} opacity="1"
               />
             );
           }
-          const pts = pcts
+          const pts = s.pcts
             .map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`)
             .join(' ');
+          // Drop shadow effect via duplicate line
           return (
-            <polyline
-              key={id}
-              points={pts}
-              fill="none"
-              stroke={color}
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              opacity="0.95"
-            />
+            <g>
+              <polyline
+                points={pts}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="6"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                opacity="0.2"
+              />
+              <polyline
+                points={pts}
+                fill="none"
+                stroke={s.color}
+                strokeWidth="3"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                opacity="1"
+              />
+            </g>
           );
-        })}
+        })()}
       </svg>
 
-      {/* Legend — name + current % change */}
+      {/* Legend — clickable, shows current % */}
       <div className="flex flex-wrap gap-x-5 gap-y-2.5 px-1">
         {series.map(({ id, name, color, cur }) => {
           const isUp = cur >= 0;
+          const isActive = highlightedId === id;
+          const isDimmed = hasHighlight && !isActive;
           return (
-            <div key={id} className="flex items-center gap-2 min-w-0">
+            <button
+              key={id}
+              type="button"
+              onClick={() => onHighlight(isActive ? null : id)}
+              className={`flex items-center gap-2 min-w-0 rounded-lg px-2 py-1 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a84c] ${
+                isActive
+                  ? 'bg-[#1d3268] ring-1 ring-[#3d6aaa]'
+                  : 'hover:bg-[#1a2a50]'
+              } ${isDimmed ? 'opacity-30' : 'opacity-100'}`}
+            >
               <div
                 className="w-5 h-[2.5px] flex-shrink-0 rounded-full"
                 style={{ backgroundColor: color }}
@@ -260,9 +320,18 @@ function PriceChart({
               >
                 {isUp ? '+' : ''}{cur.toFixed(2)}%
               </span>
-            </div>
+            </button>
           );
         })}
+        {hasHighlight && (
+          <button
+            type="button"
+            onClick={() => onHighlight(null)}
+            className="text-xs text-[#4a6a9a] hover:text-[#8aabcc] px-2 py-1 transition-colors"
+          >
+            Clear
+          </button>
+        )}
       </div>
     </div>
   );
@@ -281,10 +350,13 @@ export default function TradingPhase({
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [cash, setCash] = useState(startingCash);
   const [tick, setTick] = useState(0);
+  const [timeToNext, setTimeToNext] = useState(TICK_S);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
   const marketRef = useRef<Record<string, CompanyMarket>>({});
   const tickRef = useRef(0);
   const nextNewsInRef = useRef(4);
+  const lastTickAtRef = useRef<number>(Date.now());
 
   useEffect(() => {
     marketRef.current = market;
@@ -305,11 +377,21 @@ export default function TradingPhase({
     marketRef.current = initial;
   }, [watchlist, sessionId]);
 
+  // ── Countdown timer ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const id = setInterval(() => {
+      const elapsed = (Date.now() - lastTickAtRef.current) / 1000;
+      setTimeToNext(Math.max(0, Math.ceil(TICK_S - elapsed)));
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+
   // ── Tick interval — fires immediately then every TICK_MS ──────────────────
   useEffect(() => {
     if (watchlist.length === 0) return;
 
     function doTick() {
+      lastTickAtRef.current = Date.now();
       tickRef.current += 1;
       nextNewsInRef.current -= 1;
       const fireNews = nextNewsInRef.current <= 0;
@@ -385,7 +467,6 @@ export default function TradingPhase({
       if (newsItem) setNews((n) => [newsItem!, ...n].slice(0, 20));
     }
 
-    // Fire immediately so the chart shows data without waiting 60 seconds
     doTick();
     const id = setInterval(doTick, TICK_MS);
     return () => clearInterval(id);
@@ -481,6 +562,8 @@ export default function TradingPhase({
     );
   }
 
+  const progressPct = Math.round(((TICK_S - timeToNext) / TICK_S) * 100);
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-full px-4 sm:px-6 py-6 space-y-5 max-w-[1400px] mx-auto">
@@ -516,16 +599,43 @@ export default function TradingPhase({
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
 
         {/* Chart */}
-        <div className="bg-[#162550] border border-[#2d4f8a] rounded-2xl p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-[#162550] border border-[#2d4f8a] rounded-2xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 sm:px-5 pt-4 pb-3">
             <h2 className="text-sm font-semibold text-[#e8eeff] uppercase tracking-wide">
               Live Market — % change from open
             </h2>
-            <span className="text-xs text-[#4a6a9a] font-mono">
-              Tick {tick} · 1 tick = 1 min
-            </span>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <span className="text-xs text-[#4a6a9a] font-mono">Tick {tick}</span>
+              <div className="flex items-center gap-1.5">
+                {/* Pulsing dot */}
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#4aad70] opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#4aad70]" />
+                </span>
+                <span className="text-xs font-mono text-[#4aad70] w-[42px] text-right">
+                  {timeToNext}s
+                </span>
+              </div>
+            </div>
           </div>
-          <PriceChart market={market} companies={watchlist} />
+
+          {/* Progress bar */}
+          <div className="h-[3px] w-full bg-[#1d3268]">
+            <div
+              className="h-full bg-[#4aad70] transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+
+          <div className="px-4 sm:px-5 py-4">
+            <PriceChart
+              market={market}
+              companies={watchlist}
+              highlightedId={highlightedId}
+              onHighlight={setHighlightedId}
+            />
+          </div>
         </div>
 
         {/* News sidebar */}
