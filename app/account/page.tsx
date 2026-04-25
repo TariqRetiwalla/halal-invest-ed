@@ -93,7 +93,7 @@ function LeaderboardCard({
           const isMe = entry.username === currentUsername;
           return (
             <li
-              key={entry.rank}
+              key={entry.username}
               className={`flex items-center gap-3 px-4 py-2.5 ${
                 isMe ? 'border-l-2 border-[#c9a84c] bg-[#1d2a10]' : ''
               }`}
@@ -270,14 +270,17 @@ export default function AccountPage() {
     if (!classData) return;
     const action = currentlyLocked ? 'unlock' : 'lock';
 
-    // Optimistic update
+    // Optimistic update — upsert: add entry if not yet in array
     setClassData((prev) => {
       if (!prev) return prev;
+      const existing = prev.lessonLocks.find((l) => l.lessonNumber === lessonNumber);
       return {
         ...prev,
-        lessonLocks: prev.lessonLocks.map((l) =>
-          l.lessonNumber === lessonNumber ? { ...l, isLocked: !currentlyLocked } : l
-        ),
+        lessonLocks: existing
+          ? prev.lessonLocks.map((l) =>
+              l.lessonNumber === lessonNumber ? { ...l, isLocked: !currentlyLocked } : l
+            )
+          : [...prev.lessonLocks, { lessonNumber, isLocked: !currentlyLocked }],
       };
     });
 
@@ -301,7 +304,7 @@ export default function AccountPage() {
         });
       }
     } catch {
-      // Revert on network error
+      // Revert on network error — entry now exists in state from optimistic update
       setClassData((prev) => {
         if (!prev) return prev;
         return {

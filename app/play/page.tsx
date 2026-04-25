@@ -256,6 +256,7 @@ function PlayPage() {
   const [cashBalance, setCashBalance] = useState(500);
   const [watchlist, setWatchlist] = useState<WatchlistCompany[]>([]);
   const [finalTradingCash, setFinalTradingCash] = useState(0);
+  const [screeningFinalCash, setScreeningFinalCash] = useState(500);
 
   // ── Step 1: check access ───────────────────────────────────────────────────
   useEffect(() => {
@@ -309,6 +310,7 @@ function PlayPage() {
           setSessionId('dev-session');
           setCompanies(shuffle(raw));
           setCashBalance(1000);
+          setScreeningFinalCash(1000);
           setWatchlist(raw.map((c: PublicCompany) => ({ id: c.id, name: c.name, industry: c.industry })));
           setPhase('trading');
           return;
@@ -359,7 +361,6 @@ function PlayPage() {
           companyId: currentCompany.id,
           studentAnswers: answers,
           attemptNumber,
-          currentCash: cashBalance,
         }),
       });
 
@@ -410,6 +411,7 @@ function PlayPage() {
     setAttemptNumber(1);
 
     if (next >= companies.length) {
+      setScreeningFinalCash(cashBalance);
       setPhase('trading');
     } else {
       setCurrentIndex(next);
@@ -433,6 +435,7 @@ function PlayPage() {
     setFeedback(null);
     setHistory([]);
     setCashBalance(500);
+    setScreeningFinalCash(500);
     setWatchlist([]);
     setFinalTradingCash(0);
     setSessionKey((k) => k + 1);
@@ -498,7 +501,7 @@ function PlayPage() {
           </div>
         )}
         <DoneState
-          screeningCash={cashBalance}
+          screeningCash={screeningFinalCash}
           finalTradingCash={finalTradingCash}
           history={history}
           onRestart={handleRestart}

@@ -28,12 +28,11 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 });
     }
 
-    const { sessionId, companyId, studentAnswers, attemptNumber, currentCash: rawCurrentCash } = body as {
+    const { sessionId, companyId, studentAnswers, attemptNumber } = body as {
       sessionId: string;
       companyId: string;
       studentAnswers: unknown[];
       attemptNumber: number;
-      currentCash?: unknown;
     };
 
     if (studentAnswers.length !== 3 || studentAnswers.some((v) => typeof v !== 'boolean')) {
@@ -86,11 +85,17 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
       blocked = true;
     }
 
-    // Use client-provided cash as the authoritative current balance.
-    // Fall back to 500 if missing/invalid (e.g. first-ever session).
-    const currentCash = typeof rawCurrentCash === 'number' && rawCurrentCash >= 0
-      ? rawCurrentCash
-      : 500;
+    // Look up the student's last balance for this game session from the DB.
+    // If no prior answer exists in this session (first answer), start at 500.
+    const lastAnswer = await prisma.simulatorSession.findFirst({
+      where: { userId: user.sub, gameSessionId: sessionId },
+      orderBy: { createdAt: 'desc' },
+      select: { cashBalance: true },
+    });
+    const currentCash =
+      lastAnswer?.cashBalance != null && Number.isFinite(lastAnswer.cashBalance)
+        ? lastAnswer.cashBalance
+        : 500;
 
     let cashDelta = 0;
     if (isCorrect) {
@@ -108,6 +113,7 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     await prisma.simulatorSession.create({
       data: {
         userId: user.sub,
+        gameSessionId: sessionId,
         companyId,
         studentDecision: studentPasses ? 'pass' : 'fail',
         correct: isCorrect,
@@ -154,9 +160,6 @@ export const POST = withAuth(async (req: NextRequest, { user }) => {
     if (!isCorrect) {
       response.lessonCallback = company.lessonCallback;
     }
-
-    // Suppress unused variable warning — sessionId is accepted for future session validation
-    void sessionId;
 
     return NextResponse.json(response);
   } catch (error) {
